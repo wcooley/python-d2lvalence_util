@@ -88,7 +88,7 @@ class D2LSigner(object):
         h256 = hmac.new(k,b,hashlib.sha256)
         d = base64.urlsafe_b64encode(h256.digest())
         result = d.decode('utf-8').replace('=','').strip()
-        
+
         return result
 
     def check_hash(self, hash_string, key_string, base_string):
@@ -194,6 +194,26 @@ class D2LAppContext(object):
 
         return result
 
+    def create_anonymous_user_context(self, host, encrypt_requests=False):
+        """Build a new anonymous-LMS-user authentication context for a Valence
+        Learning Framework API client application.
+
+        :param host:
+            Host name for the back-end service.
+
+        :param encrypt_requests:
+            If true, use HTTPS for requests made through the resulting built
+            user context; if false (the default), use HTTP.
+        """
+        if host == '':
+            raise ValueError('host must have a value when building a new context.')
+        pd = {'host': host,
+             'encrypt_requests': encrypt_requests,
+             'user_id': '',
+             'user_key': '',
+             'server_skew': 0 }
+        r = self.create_user_context(d2l_user_context_props_dict=pd)
+        return r
 
     def create_user_context(self, result_uri='', host='', encrypt_requests=False,
                           d2l_user_context_props_dict={}):
@@ -301,8 +321,10 @@ class D2LUserContext(AuthBase):
             self.scheme = self.SCHEME_S
         self.host = self.user_id = self.user_key = self.app_id = self.app_key = ''
 
-        if '' in (host, user_id, user_key, app_id, app_key):
-            raise ValueError('host, user_id, user_key, app_id, and app_key must have values.')
+        if (user_id == '') != (user_key == ''):
+            raise ValueError('Anonymous context must have user_id and user_key empty; or, user context must have both user_id and user_key with values.')
+        elif '' in (host, app_id, app_key):
+            raise ValueError('host, app_id, and app_key must have values.')
         else:
             self.host = host
             self.user_id = user_id
@@ -312,6 +334,11 @@ class D2LUserContext(AuthBase):
             self.encrypt_requests = encrypt_requests
             self.server_skew = server_skew
 
+        if self.user_id == '':
+            self.anonymous = True
+        else:
+            self.anonymous = False
+
         if not isinstance(signer, D2LSigner):
             raise TypeError('signer must implement D2LSigner')
         else:
@@ -320,7 +347,7 @@ class D2LUserContext(AuthBase):
     # Entrypoint for use by requests.auth.AuthBase callers
     def __call__(self,r):
         # modify requests.Request `r` to patch in appropriate auth goo
-        
+
         scheme = netloc = path = query = fragment = ''
 
         parts = urllib.parse.urlsplit(r.url)
@@ -333,7 +360,10 @@ class D2LUserContext(AuthBase):
         base = '{0}&{1}&{2}'.format(method.upper(), path.lower(), time)
 
         app_sig = self.signer.get_hash(self.app_key, base)
-        usr_sig = self.signer.get_hash(self.user_key, base)
+        if self.anonymous:
+            usr_sig = ''
+        else:
+            usr_sig = self.signer.get_hash(self.user_key, base)
 
         # set up the dictionary for the query parms to add
         parms_dict = { self.APP_ID: [self.app_id],
@@ -346,7 +376,7 @@ class D2LUserContext(AuthBase):
         query = urllib.parse.urlencode(qparms_dict,doseq=True)
 
         r.url = urllib.parse.urlunsplit((scheme, netloc, path, query, fragment))
-        
+
         return r
 
     def __repr__(self):
@@ -374,7 +404,10 @@ class D2LUserContext(AuthBase):
         base = '{0}&{1}&{2}'.format(method.upper(), api_route.lower(), time)
 
         app_sig = self.signer.get_hash(self.app_key, base)
-        usr_sig = self.signer.get_hash(self.user_key, base)
+        if self.anonymous:
+            usr_sig = ''
+        else:
+            usr_sig = self.signer.get_hash(self.user_key, base)
 
         parms_dict = { self.APP_ID:self.app_id,
                       self.APP_SIG:app_sig,
@@ -416,7 +449,7 @@ class D2LUserContext(AuthBase):
         :returns: One of the enumerated D2LAuthResult class variables.
         """
         result = D2LAuthResult.UNKNOWN
-    
+
         if result_code == 200:
             result = D2LAuthResult.OKAY
         elif result_code == 401:
@@ -435,7 +468,8 @@ class D2LUserContext(AuthBase):
                'user_id':self.user_id,
                'user_key':self.user_key,
                'encrypt_requests':self.encrypt_requests,
-               'server_skew':self.server_skew
+               'server_skew':self.server_skew,
+               'anonymous':self.anonymous
             }
         return cp
 
@@ -446,6 +480,3 @@ class D2LUserContext(AuthBase):
         :param newSkewMillis: New server time-skew value, in milliseconds.
         """
         self.server_skew = new_skew
-
-
-

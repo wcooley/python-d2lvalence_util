@@ -115,7 +115,7 @@ class D2LFile(D2LStructure):
 
     Name = property(get_string_prop('Name'),set_string_prop('Name'))
     ContentType = property(get_string_prop('ContentType'),set_string_prop('ContentType'))
-    
+
 
 class D2LLockerFile(D2LFile):
     def __init__(self,json_dict):
@@ -148,14 +148,14 @@ class BulkSupportedVersionResponse(D2LStructure):
     @property
     def Versions(self):
         return self.props['Versions']
-    
+
 class ApiVersion(D2LStructure):
     def __init__(self,json_dict):
         D2LStructure.__init__(self,json_dict)
 
     Version = property(get_string_prop('Version'))
     ProductCode = property(get_string_prop('ProductCode'))
-    
+
 class ProductVersions(D2LStructure):
     def __init__(self,json_dict):
         D2LStructure.__init__(self,json_dict)
@@ -329,14 +329,14 @@ class UserProfile(D2LStructure):
     University = property(get_string_prop('University'), set_string_prop('University'))
     Hobbies = property(get_string_prop('Hobbies'), set_string_prop('Hobbies'))
     FavMusic = property(get_string_prop('FavMusic'), set_string_prop('FavMusic'))
-    FavTVShows = property(get_string_prop('FavTVShows'), set_string_prop('FavTVShows'))    
+    FavTVShows = property(get_string_prop('FavTVShows'), set_string_prop('FavTVShows'))
     FavMovies = property(get_string_prop('FavMovies'), set_string_prop('FavMovies'))
     FavBooks = property(get_string_prop('FavBooks'), set_string_prop('FavBooks'))
     FavQuotations = property(get_string_prop('FavQuotations'), set_string_prop('FavQuotations'))
     FavWebSites = property(get_string_prop('FavWebSites'), set_string_prop('FavWebSites'))
     FutureGoals = property(get_string_prop('FutureGoals'), set_string_prop('FutureGoals'))
     FavMemory = property(get_string_prop('FavMemory'), set_string_prop('FavMemory'))
-    
+
     @property
     def Birthday(self):
         return self.props['Birthday']
@@ -359,7 +359,7 @@ class UserProfile(D2LStructure):
     @property
     def BirthdayDay(self):
         return self.props['Birthday']['Day']
-    
+
     @BirthdayMonth.setter
     def BirthdayDay(self,new_birthdayday):
         self.props['Birthday']['Day'] = new_birthdayday
@@ -380,7 +380,7 @@ class UserProfile(D2LStructure):
             if name in self.props['SocialMediaUrls'][i]['Name']:
                 result.append(self.props['SocialMediaUrls'][i])
         return result
-            
+
     def add_social_media_url(self, name='', url=''):
         """Append a new social media Name/URL pair to the list. """
         self.props['SocialMediaUrls'].append({'Name': str(name), 'Url': str(url)})
@@ -504,7 +504,7 @@ class GradeObject(D2LStructure):
     # These two props should be read-only on every instance
     Id = property(get_number_prop('Id'))
     GradeType = property(get_string_prop('GradeType'))
-    
+
     Name = property(get_string_prop('Name'), set_string_prop('Name'))
     ShortName = property(get_string_prop('ShortName'), set_string_prop('ShortName'))
     CategoryId = property(get_number_prop('Category'), set_string_prop('CategoryId'))
@@ -518,7 +518,7 @@ class GradeObject(D2LStructure):
         if is_html:
             t = 'HTML'
         self.props['Description'] = {'Content': descr, 'Type': t }
-        
+
 class GradeObjectNumeric(GradeObject):
     def __init__(self,json_dict):
         GradeObject.__init__(self,json_dict)
@@ -542,7 +542,7 @@ class GradeObjectPassFail(GradeObject):
     ExcludeFromFinalGradeCalculation = property(get_boolean_prop('ExcludeFromFinalGradeCalculation'),
                                                 set_boolean_prop('ExcludeFromFinalGradeCalculation'))
     GradeSchemeId = property(get_number_prop('GradeSchemeId'), set_number_prop('GradeSchemeId'))
-    
+
 class GradeObjectSelectBox(GradeObject):
     def __init__(self,json_dict):
         GradeObject.__init__(self,json_dict)

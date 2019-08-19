@@ -30,62 +30,77 @@ import d2lvalence.data as d2ldata
 
 # internal utility functions
 
+def _fetch_content(request):
+    ct = ''
+    if request.headers['content-type']:
+        ct = request.headers['content-type']
+    if 'application/json' in ct:
+        return request.json
+    elif 'text/plain' in ct:
+        return request.text
+    else:
+        return request.content
+
 def _delete(route,uc,params=None,data=None,headers=None):
+    if uc.anonymous:
+        raise ValueError('User context cannot be anonymous.')
     r = requests.delete(uc.scheme + '://' + uc.host + route, params=params, data=data, headers=headers, auth=uc)
     r.raise_for_status()
-    # catch TypeError because the current version of the requests library throws it here
-    # when the body is empty --> r.text returns ''
-    try:
-        return r.json
-    except TypeError:
-        return r.content
+    return _fetch_content(r)
 
 def _get(route,uc,params=None,data=None,headers=None):
+    if uc.anonymous:
+        raise ValueError('User context cannot be anonymous.')
     r = requests.get(uc.scheme + '://' + uc.host + route, params=params, data=data, headers=headers, auth=uc)
     r.raise_for_status()
-    try:
-        return r.json
-    except TypeError:
-        return r.content
+    return _fetch_content(r)
 
 def _post(route,uc,params=None,data=None,headers=None):
+    if uc.anonymous:
+        raise ValueError('User context cannot be anonymous.')
     r = requests.post(uc.scheme + '://' + uc.host + route, params=params, data=data, headers=headers, auth=uc)
     r.raise_for_status()
-    try:
-        return r.json
-    except TypeError:
-        return r.content
+    return _fetch_content(r)
 
 def _put(route,uc,params=None,data=None,headers=None):
+    if uc.anonymous:
+        raise ValueError('User context cannot be anonymous.')
     r = requests.put(uc.scheme + '://' + uc.host + route, params=params, data=data, headers=headers, auth=uc)
     r.raise_for_status()
-    try:
-        return r.json
-    except TypeError:
-        return r.content
+    return _fetch_content(r)
+
+def _get_anon(route,uc,params=None,data=None,headers=None):
+    r = requests.get(uc.scheme + '://' + uc.host + route, params=params, data=data, headers=headers, auth=uc)
+    r.raise_for_status()
+    return _fetch_content(r)
+
+def _post_anon(route,uc,params=None,data=None,headers=None):
+    r = requests.post(uc.scheme + '://' + uc.host + route, params=params, data=data, headers=headers, auth=uc)
+    r.raise_for_status()
+    return _fetch_content(r)
 
 ## API Properties functions
 # Versions
 
 def get_versions_for_product_component(uc,pc):
     route = '/d2l/api/{0}/versions/'.format(pc)
-    return d2ldata.ProductVersions(_get(route,uc))
+    return d2ldata.ProductVersions(_get_anon(route,uc))
 
 def get_version_for_product_component(uc,pc,ver):
     route = '/d2l/api/{0}/versions/{1}'.format(pc,ver)
-    return d2ldata.SupportedVersion(_get(route,uc))
+    return d2ldata.SupportedVersion(_get_anon(route,uc))
 
 def get_all_versions(uc):
     route = '/d2l/api/versions/'
-    r = _get(route,uc)
+    r = _get_anon(route,uc)
     result = []
     for i in range(len(r)):
-        result.append(r[i]) 
+        result.append(r[i])
     return result
 
 def check_versions(uc,supported_version_request_array):
     route = '/d2l/api/versions/check'
-    return d2ldata.BulkSupportedVersionResponse(_post(route,uc,data=supported_version_request_array))
+    return d2ldata.BulkSupportedVersionResponse(_post_anon(route,uc,data=json.dumps(supported_version_request_array)))
 
 
 ## User functions
@@ -231,9 +246,8 @@ def get_all_grade_objects_for_org(uc,orgUnitId,ver='1.0'):
             result.append( d2ldata.GradeObjectText(r[i]))
         else:
             result.append( d2ldata.GradeObject(r[i]))
-
     return result
-                      
+
 def get_grade_object_for_org(uc,orgUnitId,gradeObjectId,ver='1.0'):
     route = '/d2l/api/le/{0}/{1}/grades/{2}'.format(ver,orgUnitId,gradeObjectId)
     r = _get(route,uc)
@@ -249,7 +263,6 @@ def get_grade_object_for_org(uc,orgUnitId,gradeObjectId,ver='1.0'):
         result = d2ldata.GradeObjectText(r)
     else:
         result = d2ldata.GradeObject(r)
-
     return result
 
 def get_final_grade_value_for_user_in_org(uc,orgUnitId,userId,ver='1.0'):
@@ -264,7 +277,6 @@ def get_grade_value_for_user_in_org(uc,orgUnitId,gradeObjectId,userId,ver='1.0')
         result = d2ldata.GradeValueComputable(r)
     else:
         result = d2ldata.GradeValue(r)
-
     return result
 
 def get_all_grade_values_for_user_in_org(uc,orgUnitId,userId,ver='1.0'):
@@ -278,6 +290,38 @@ def get_all_grade_values_for_user_in_org(uc,orgUnitId,userId,ver='1.0'):
             result.append(d2ldata.GradeValue(r[i]))
     return result
 
+def get_my_final_grade_value_for_org(uc,orgUnitId,ver='1.0'):
+    route = '/d2l/api/le/{0}/{1}/grades/final/values/myGradeValue'.format(ver,orgUnitId)
+    return d2ldata.GradeValueComputable(_get(route,uc))
+
+def get_my_grade_value_for_org(uc,orgUnitId,gradeObjectId,ver='1.0'):
+    route = '/d2l/api/le/{0}/{1}/grades/{2}/values/myGradeValue'.format(ver,orgUnitId,gradeObjectId)
+    r = _get(route,uc)
+    result = None
+    if 'PointsNumerator' in r:
+        result = d2ldata.GradeValueComputable(r)
+    else:
+        result = d2ldata.GradeValue(r)
+    return result
+
+def get_all_my_grade_values_for_org(uc,orgUnitId,ver='1.0'):
+    route = '/d2l/api/le/{0}/{1}/grades/values/myGradeValues/'.format(ver,orgUnitId)
+    r = _get(route,uc)
+    result = []
+    for i in range(len(r)):
+        t = r[i]['GradeObjectTypeName']
+        if t == 'Numeric':
+            result.append( d2ldata.GradeObjectNumeric(r[i]))
+        elif t == 'PassFail':
+            result.append( d2ldata.GradeObjectPassFail(r[i]))
+        elif t == 'SelectBox':
+            result.append( d2ldata.GradeObjectSelectBox(r[i]))
+        elif t == 'Text':
+            result.append( d2ldata.GradeObjectText(r[i]))
+        else:
+            result.append( d2ldata.GradeObject(r[i]))
+    return result
+
 
 ## Lockers
 def _simple_upload(route,uc,f):
@@ -285,15 +329,16 @@ def _simple_upload(route,uc,f):
         raise TypeError('File must implement d2lvalence.data.D2LFile')
 
     boundary = uuid.uuid4().hex
-    fdata.seek(0) # check the tape
+    f.Stream.seek(0) # check the tape
     fdata = f.Stream.read()
-    fdata.seek(0) # please be kind, rewind
+    f.Stream.seek(0) # please be kind, rewind
 
     pdescr = '--{0}\r\nContent-Type: application/json\r\n\r\n{1}\r\n'.format(boundary,json.dumps(f.DescriptorDict)).encode(encoding='utf-8')
     ptopbound = '--{0}\r\nContent-Disposition: form-data; name=""; filename="{1}"\r\nContent-Type: {2}\r\n\r\n'.format(boundary,f.Name,f.ContentType).encode(encoding='utf-8')
     pbotbound = '\r\n--{0}--'.format(boundary).encode(encoding='utf-8')
 
     payload = pdescr + ptopbound + fdata + pbotbound
+
     headers = {'Content-Type':'multipart/mixed;boundary='+boundary,
                'Content-Length': str(len(payload))}
 
@@ -325,7 +370,7 @@ def delete_locker_item(uc,user_id,path='/',ver='1.0'):
     if _check_path(path):
         route = '/d2l/api/le/{0}/locker/user/{1}{2}'.format(ver,user_id,path)
         r = _delete(route,uc)
-        
+
 def get_my_locker_item(uc,path='/',ver='1.0'):
     if _check_path(path):
         route = '/d2l/api/le/{0}/locker/myLocker{1}'.format(ver,path)
@@ -399,4 +444,3 @@ def rename_group_locker_folder(uc,orgunit_id,group_id,new_folder_name,path='/',v
     if _check_path(path):
         route = '/d2l/api/le/{0}/{1}/locker/group/{2}{3}'.format(ver,user_id,path)
         return _put(route,uc,data=json.dumps(new_folder_name),headers={'Content-Type':'application/json'})
-
