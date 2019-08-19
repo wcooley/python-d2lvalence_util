@@ -58,7 +58,6 @@ def fashion_user_context(app_id='', app_key='', d2l_user_context_props_dict={}):
 class D2LSigner(object):
     """Default signer class that app and user contexts can use to create
     appropriately signed tokens.
-
     """
 
     def get_hash(self, key_string, base_string):

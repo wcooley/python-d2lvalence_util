@@ -3,13 +3,27 @@
 History
 -------
 
-0.1.8()
-+++++++
+0.1.9 (2012-10-15)
+++++++++++++++++++
+* added data and service functions for Learning Repostory routes
+* added data and service functions for course offering and content routes
+* added data and service functions for discussion forum routes
+* renamed utility functions in `data` module used for property set/getting to
+  suggest they should be internal and not directly used
+* added default (empty) value for `DescriptorDict` property to the
+  `data.D2LLockerFile` class
+* added `files` named parameter to post and put utility methods for simple file
+  post/puts
+* fix `service.rename_group_locker_folder()` to propertly form route
+* cleanup service module to python-ify parameter names
+
+0.1.8 (2012-08-30)
+++++++++++++++++++
 * added support to the `auth` module for building an anonymous user context
   (context with no user ID/Key pair) -- clients can use such a context to make
   calls to the various API Property/Version routes to query LMS for API versions
 * moved auth to use direct `==` comparison to check for empty parameters instead
-  of use `in (singleItemList,)` pattern.
+  of use `in (singleItemList,)` pattern
 * factored out process of fetching contents of Requests objects into a single
   funtion, moved to examine `request.headers['content.type']` to determine how
   to handle contents rather than just `try` to fetch r.JSON and default to
@@ -31,12 +45,12 @@ History
   locker operations
 * added to suite of locker functions to the `service` module to assist with locker
   operations: this includes an example of how you might want to handle the
-  "simple upload" process for those Valence routes that use simple file upload.
+  "simple upload" process for those Valence routes that use simple file upload
 
 0.1.6 (2012-07-13)
 ++++++++++++++++++
 * Fix bug in `update_social_media_url_by_url()`... we should look
-  for 'url'-keyed entries, not 'name'-keyed entries.
+  for 'url'-keyed entries, not 'name'-keyed entries
 
 * Some documentation revisions
 
@@ -45,7 +59,7 @@ History
 0.1.5 (2012-07-11)
 ++++++++++++++++++
 * Changed `D2LStructure.as_json()` to kick back a deep-copy of the encapsulated
-  data, instead of a ref to the instance's internal data structure.
+  data, instead of a ref to the instance's internal data structure
 
 * Bug fixes
 
@@ -56,7 +70,7 @@ History
   auth-related functionality remains in `auth`
 
 * Re-worked samples to be more in line with design for the other client
-  libraries.
+  libraries
 
 0.1.0 (2012-06-02)
 ++++++++++++++++++
