@@ -165,6 +165,30 @@ class D2LFile(D2LStructure):
     Name = property(_get_string_prop('Name'),_set_string_prop('Name'))
     ContentType = property(_get_string_prop('ContentType'),_set_string_prop('ContentType'))
 
+class D2LDropboxSubmission(D2LFile):
+    """ D2LFile inheritor for forming file structures specifically for uploading
+    submissions to dropbox. """
+    def __init__(self,props_dict):
+        D2LFile.__init__(self,props_dict)
+        if 'DescriptorDict' not in self.props:
+            self.props['DescriptorDict']={'Text':None,'HTML':None}
+
+    @property
+    def Text(self):
+        return self.props['DescriptorDict']['Text']
+
+    @Text.setter
+    def Text(self,s):
+        self.props['DescriptorDict']['Text']=s
+
+    @property
+    def HTML(self):
+        return self.props['DescriptorDict']['HTML']
+
+    @HTML.setter
+    def HTML(self,s):
+        self.props['DescriptorDict']['HTML']=s
+
 
 class D2LLockerFile(D2LFile):
     """ D2LFile inheritor for forming file structures specifically for uploading
@@ -263,9 +287,9 @@ class CreateUserData(D2LStructure):
                                first_name='',
                                middle_name='',
                                last_name='',
-                               external_email='',
+                               external_email=None,
                                user_name='',
-                               role_id=78,
+                               role_id='',
                                is_active=False,
                                send_creation_email=False):
         cud = {'OrgDefinedId': org_defined_id,
@@ -283,1125 +307,1235 @@ class CreateUserData(D2LStructure):
     FirstName = property(_get_string_prop('FirstName'), _set_string_prop('FirstName'))
     MiddleName = property(_get_string_prop('MiddleName'), _set_string_prop('MiddleName'))
     LastName = property(_get_string_prop('LastName'), _set_string_prop('LastName'))
-    ExternalEmail = property(_get_string_prop('ExternalEmail'), _set_string_prop('ExternalEmail'))
     UserName = property(_get_string_prop('UserName'), _set_string_prop('UserName'))
     RoleId = property(_get_number_prop('RoleId'), _set_number_prop('RoleId'))
     IsActive = property(_get_boolean_prop('IsActive'), _set_boolean_prop('IsActive'))
     SendCreationEmail = property(_get_boolean_prop('SendCreationEmail'), _set_boolean_prop('IsActive'))
 
+    @property
+    def ExternalEmail(self):
+        return self.props['ExternalEmail']
+
+    @ExternalEmail.setter
+    def ExternalEmail(self,new_email=None):
+        if not new_email:
+            self.props['ExternalEmail'] = None
+        else:
+            self.props['ExternalEmail'] = new_email
+
 class UpdateUserData(D2LStructure):
-    def __init__(self,json_dict):
-        D2LStructure.__init__(self,json_dict)
+   def __init__(self,json_dict):
+       D2LStructure.__init__(self,json_dict)
 
-    @staticmethod
-    def fashion_UpdateUserData(org_defined_id='',
-                               first_name='',
-                               middle_name='',
-                               last_name='',
-                               external_email='',
-                               user_name='',
-                               is_active=False):
-        cud = { 'OrgDefinedId': org_defined_id,
-                'FirstName': first_name,
-                'MiddleName': middle_name,
-                'LastName': last_name,
-                'ExternalEmail': external_email,
-                'UserName': user_name,
-                'Activation': { 'IsActive': is_active }
-            }
-        return UpdateUserData(cud)
+   @staticmethod
+   def fashion_UpdateUserData(org_defined_id='',
+                              first_name='',
+                              middle_name='',
+                              last_name='',
+                              external_email=None,
+                              user_name='',
+                              is_active=False):
+       uud = { 'OrgDefinedId': org_defined_id,
+               'FirstName': first_name,
+               'MiddleName': middle_name,
+               'LastName': last_name,
+               'ExternalEmail': external_email,
+               'UserName': user_name,
+               'Activation': { 'IsActive': is_active }
+           }
+       return UpdateUserData(uud)
 
-    OrgDefinedId = property(_get_string_prop('OrgDefinedId'),_set_string_prop('OrgDefinedId'))
-    FirstName = property(_get_string_prop('FirstName'), _set_string_prop('FirstName'))
-    MiddleName = property(_get_string_prop('MiddleName'), _set_string_prop('MiddleName'))
-    LastName = property(_get_string_prop('LastName'), _set_string_prop('LastName'))
-    ExternalEmail = property(_get_string_prop('ExternalEmail'), _set_string_prop('ExternalEmail'))
-    UserName = property(_get_string_prop('UserName'), _set_string_prop('UserName'))
+   OrgDefinedId = property(_get_string_prop('OrgDefinedId'),_set_string_prop('OrgDefinedId'))
+   FirstName = property(_get_string_prop('FirstName'), _set_string_prop('FirstName'))
+   MiddleName = property(_get_string_prop('MiddleName'), _set_string_prop('MiddleName'))
+   LastName = property(_get_string_prop('LastName'), _set_string_prop('LastName'))
+   UserName = property(_get_string_prop('UserName'), _set_string_prop('UserName'))
 
-    @property
-    def Activation(self):
-        return self.props['Activation']
 
-    @Activation.setter
-    def Activation(self,new_activation):
-        self.props['Activation'] = new_activation
+   @property
+   def ExternalEmail(self):
+       return self.props['ExternalEmail']
 
-    @property
-    def IsActive(self):
-        return self.props['Activation']['IsActive']
+   @ExternalEmail.setter
+   def ExternalEmail(self,new_email=None):
+       if not new_email:
+           self.props['ExternalEmail'] = None
+       else:
+           self.props['ExternalEmail'] = new_email
+   
+   @property
+   def Activation(self):
+       return self.props['Activation']
 
-    @IsActive.setter
-    def IsActive(self,new_activation_status):
-        self.props['Activation']['IsActive'] = bool(new_activation_status)
+   @Activation.setter
+   def Activation(self,new_activation):
+       self.props['Activation'] = new_activation
+
+   @property
+   def IsActive(self):
+       return self.props['Activation']['IsActive']
+
+   @IsActive.setter
+   def IsActive(self,new_activation_status):
+       self.props['Activation']['IsActive'] = bool(new_activation_status)
 
 class UserData(D2LStructure):
-    def __init__(self,json_dict):
-        D2LStructure.__init__(self,json_dict)
+   def __init__(self,json_dict):
+       D2LStructure.__init__(self,json_dict)
 
-    OrgId = property(_get_number_prop('OrgId'))
-    UserId = property(_get_number_prop('UserId'))
-    FirstName = property(_get_string_prop('FirstName'))
-    MiddleName = property(_get_string_prop('MiddleName'))
-    LastName = property(_get_string_prop('LastName'))
-    UserName = property(_get_string_prop('UserName'))
-    ExternalEmail = property(_get_string_prop('ExternalEmail'))
-    OrgDefinedId = property(_get_string_prop('OrgDefinedId'))
-    UniqueIdentifier = property(_get_string_prop('UniqueIdentifier'))
+   OrgId = property(_get_number_prop('OrgId'))
+   UserId = property(_get_number_prop('UserId'))
+   FirstName = property(_get_string_prop('FirstName'))
+   MiddleName = property(_get_string_prop('MiddleName'))
+   LastName = property(_get_string_prop('LastName'))
+   UserName = property(_get_string_prop('UserName'))
+   ExternalEmail = property(_get_string_prop('ExternalEmail'))
+   OrgDefinedId = property(_get_string_prop('OrgDefinedId'))
+   UniqueIdentifier = property(_get_string_prop('UniqueIdentifier'))
 
-    @property
-    def Activation(self):
-        return self.props['Activation']
+   @property
+   def Activation(self):
+       return self.props['Activation']
 
-    @property
-    def IsActive(self):
-        return self.props['Activation']['IsActive']
+   @property
+   def IsActive(self):
+       return self.props['Activation']['IsActive']
 
 class WhoAmIUser(D2LStructure):
-    def __init__(self,json_dict):
-        D2LStructure.__init__(self,json_dict)
+   def __init__(self,json_dict):
+       D2LStructure.__init__(self,json_dict)
 
-    Identifier = property(_get_string_prop('Identifier'))
-    FirstName = property(_get_string_prop('FirstName'))
-    LastName = property(_get_string_prop('LastName'))
-    UniqueName = property(_get_string_prop('UniqueName'))
-    ProfileIdentifier = property(_get_string_prop('ProfileIdentifier'))
+   Identifier = property(_get_string_prop('Identifier'))
+   FirstName = property(_get_string_prop('FirstName'))
+   LastName = property(_get_string_prop('LastName'))
+   UniqueName = property(_get_string_prop('UniqueName'))
+   ProfileIdentifier = property(_get_string_prop('ProfileIdentifier'))
 
 class UserProfile(D2LStructure):
-    def __init__(self,json_dict):
-        D2LStructure.__init__(self,json_dict)
+   def __init__(self,json_dict):
+       D2LStructure.__init__(self,json_dict)
 
-    Nickname = property(_get_string_prop('Nickname'), _set_string_prop('Nickname'))
-    HomeTown = property(_get_string_prop('HomeTown'), _set_string_prop('HomeTown'))
-    Email = property(_get_string_prop('Email'), _set_string_prop('Email'))
-    HomePage = property(_get_string_prop('HomePage'), _set_string_prop('HomePage'))
-    HomePhone = property(_get_string_prop('HomePhone'), _set_string_prop('HomePhone'))
-    BusinessPhone = property(_get_string_prop('BusinessPhone'), _set_string_prop('BusinessPhone'))
-    MobilePhone = property(_get_string_prop('MobilePhone'), _set_string_prop('MobilePhone'))
-    FaxNumber = property(_get_string_prop('FaxNumber'), _set_string_prop('FaxNumber'))
-    Address1 = property(_get_string_prop('Address1'), _set_string_prop('Address1'))
-    Address2 = property(_get_string_prop('Address2'), _set_string_prop('Address2'))
-    City = property(_get_string_prop('City'), _set_string_prop('City'))
-    Province = property(_get_string_prop('Province'), _set_string_prop('Province'))
-    PostalCode = property(_get_string_prop('PostalCode'), _set_string_prop('PostalCode'))
-    Country = property(_get_string_prop('Country'), _set_string_prop('Country'))
-    Company = property(_get_string_prop('Company'), _set_string_prop('Company'))
-    JobTitle = property(_get_string_prop('JobTitle'), _set_string_prop('JobTitle'))
-    HighSchool = property(_get_string_prop('HighSchool'), _set_string_prop('HighSchool'))
-    University = property(_get_string_prop('University'), _set_string_prop('University'))
-    Hobbies = property(_get_string_prop('Hobbies'), _set_string_prop('Hobbies'))
-    FavMusic = property(_get_string_prop('FavMusic'), _set_string_prop('FavMusic'))
-    FavTVShows = property(_get_string_prop('FavTVShows'), _set_string_prop('FavTVShows'))
-    FavMovies = property(_get_string_prop('FavMovies'), _set_string_prop('FavMovies'))
-    FavBooks = property(_get_string_prop('FavBooks'), _set_string_prop('FavBooks'))
-    FavQuotations = property(_get_string_prop('FavQuotations'), _set_string_prop('FavQuotations'))
-    FavWebSites = property(_get_string_prop('FavWebSites'), _set_string_prop('FavWebSites'))
-    FutureGoals = property(_get_string_prop('FutureGoals'), _set_string_prop('FutureGoals'))
-    FavMemory = property(_get_string_prop('FavMemory'), _set_string_prop('FavMemory'))
+   Nickname = property(_get_string_prop('Nickname'), _set_string_prop('Nickname'))
+   HomeTown = property(_get_string_prop('HomeTown'), _set_string_prop('HomeTown'))
+   Email = property(_get_string_prop('Email'), _set_string_prop('Email'))
+   HomePage = property(_get_string_prop('HomePage'), _set_string_prop('HomePage'))
+   HomePhone = property(_get_string_prop('HomePhone'), _set_string_prop('HomePhone'))
+   BusinessPhone = property(_get_string_prop('BusinessPhone'), _set_string_prop('BusinessPhone'))
+   MobilePhone = property(_get_string_prop('MobilePhone'), _set_string_prop('MobilePhone'))
+   FaxNumber = property(_get_string_prop('FaxNumber'), _set_string_prop('FaxNumber'))
+   Address1 = property(_get_string_prop('Address1'), _set_string_prop('Address1'))
+   Address2 = property(_get_string_prop('Address2'), _set_string_prop('Address2'))
+   City = property(_get_string_prop('City'), _set_string_prop('City'))
+   Province = property(_get_string_prop('Province'), _set_string_prop('Province'))
+   PostalCode = property(_get_string_prop('PostalCode'), _set_string_prop('PostalCode'))
+   Country = property(_get_string_prop('Country'), _set_string_prop('Country'))
+   Company = property(_get_string_prop('Company'), _set_string_prop('Company'))
+   JobTitle = property(_get_string_prop('JobTitle'), _set_string_prop('JobTitle'))
+   HighSchool = property(_get_string_prop('HighSchool'), _set_string_prop('HighSchool'))
+   University = property(_get_string_prop('University'), _set_string_prop('University'))
+   Hobbies = property(_get_string_prop('Hobbies'), _set_string_prop('Hobbies'))
+   FavMusic = property(_get_string_prop('FavMusic'), _set_string_prop('FavMusic'))
+   FavTVShows = property(_get_string_prop('FavTVShows'), _set_string_prop('FavTVShows'))
+   FavMovies = property(_get_string_prop('FavMovies'), _set_string_prop('FavMovies'))
+   FavBooks = property(_get_string_prop('FavBooks'), _set_string_prop('FavBooks'))
+   FavQuotations = property(_get_string_prop('FavQuotations'), _set_string_prop('FavQuotations'))
+   FavWebSites = property(_get_string_prop('FavWebSites'), _set_string_prop('FavWebSites'))
+   FutureGoals = property(_get_string_prop('FutureGoals'), _set_string_prop('FutureGoals'))
+   FavMemory = property(_get_string_prop('FavMemory'), _set_string_prop('FavMemory'))
 
-    @property
-    def Birthday(self):
-        return self.props['Birthday']
+   @property
+   def Birthday(self):
+       return self.props['Birthday']
 
-    @Birthday.setter
-    def Birthday(self, new_birthday):
-        self.props['Birthday'] = new_birthday
+   @Birthday.setter
+   def Birthday(self, new_birthday):
+       self.props['Birthday'] = new_birthday
 
-    def update_birthday(self, new_month, new_day):
-        self.props['Birthday'] = {'Month': int(new_month), 'Day': int(new_day)}
+   def update_birthday(self, new_month, new_day):
+       self.props['Birthday'] = {'Month': int(new_month), 'Day': int(new_day)}
 
-    @property
-    def BirthdayMonth(self):
-        return self.props['Birthday']['Month']
+   @property
+   def BirthdayMonth(self):
+       return self.props['Birthday']['Month']
 
-    @BirthdayMonth.setter
-    def BirthdayMonth(self,new_birthdaymonth):
-        self.props['Birthday']['Month'] = new_birthdaymonth
+   @BirthdayMonth.setter
+   def BirthdayMonth(self,new_birthdaymonth):
+       self.props['Birthday']['Month'] = new_birthdaymonth
 
-    @property
-    def BirthdayDay(self):
-        return self.props['Birthday']['Day']
+   @property
+   def BirthdayDay(self):
+       return self.props['Birthday']['Day']
 
-    @BirthdayMonth.setter
-    def BirthdayDay(self,new_birthdayday):
-        self.props['Birthday']['Day'] = new_birthdayday
+   @BirthdayMonth.setter
+   def BirthdayDay(self,new_birthdayday):
+       self.props['Birthday']['Day'] = new_birthdayday
 
-    @property
-    def SocialMediaUrls(self):
-        return self.props['SocialMediaUrls']
+   @property
+   def SocialMediaUrls(self):
+       return self.props['SocialMediaUrls']
 
-    @SocialMediaUrls.setter
-    def SocialMediaUrls(self, new_socialmediaurl_list):
-        """Replace the SocialMediaUrls block with an entierly new array of
-        social media URL dicts."""
-        self.props['SocialMediaUrls'] = new_socialmediaurl_list
+   @SocialMediaUrls.setter
+   def SocialMediaUrls(self, new_socialmediaurl_list):
+       """Replace the SocialMediaUrls block with an entierly new array of
+       social media URL dicts."""
+       self.props['SocialMediaUrls'] = new_socialmediaurl_list
 
-    def find_social_media_url(self, name):
-        result = []
-        for i in range(len(self.props['SocialMediaUrls'])):
-            if name in self.props['SocialMediaUrls'][i]['Name']:
-                result.append(self.props['SocialMediaUrls'][i])
-        return result
+   def find_social_media_url(self, name):
+       result = []
+       for i in range(len(self.props['SocialMediaUrls'])):
+           if name in self.props['SocialMediaUrls'][i]['Name']:
+               result.append(self.props['SocialMediaUrls'][i])
+       return result
 
-    def add_social_media_url(self, name='', url=''):
-        """Append a new social media Name/URL pair to the list. """
-        self.props['SocialMediaUrls'].append({'Name': str(name), 'Url': str(url)})
+   def add_social_media_url(self, name='', url=''):
+       """Append a new social media Name/URL pair to the list. """
+       self.props['SocialMediaUrls'].append({'Name': str(name), 'Url': str(url)})
 
-    def remove_social_media_url_by_name(self, name):
-        """Remove all social media entries from the list that match the given
-        name. """
-        for i in range(len(self.props['SocialMediaUrls'])):
-            if name in self.props['SocialMediaUrls'][i]['Name']:
-                del self.props['SocialMediaUrls'][i]
+   def remove_social_media_url_by_name(self, name):
+       """Remove all social media entries from the list that match the given
+       name. """
+       for i in range(len(self.props['SocialMediaUrls'])):
+           if name in self.props['SocialMediaUrls'][i]['Name']:
+               del self.props['SocialMediaUrls'][i]
 
-    def remove_social_media_url_by_url(self, url):
-        """Remove all social media entries from the list that match the given
-        URL. """
-        for i in range(len(self.props['SocialMediaUrls'])):
-            if url in self.props['SocialMediaUrls'][i]['Url']:
-                del self.props['SocialMediaUrls'][i]
+   def remove_social_media_url_by_url(self, url):
+       """Remove all social media entries from the list that match the given
+       URL. """
+       for i in range(len(self.props['SocialMediaUrls'])):
+           if url in self.props['SocialMediaUrls'][i]['Url']:
+               del self.props['SocialMediaUrls'][i]
 
-    def update_social_media_url_by_name(self, name, url):
-        """Find all entries matching name, and update their URL as provided."""
-        for i in range(len(self.props['SocialMediaUrls'])):
-            if name in self.props['SocialMediaUrls'][i]['Name']:
-                self.props['SocialMediaUrls'][i]['Url'] = str(url)
+   def update_social_media_url_by_name(self, name, url):
+       """Find all entries matching name, and update their URL as provided."""
+       for i in range(len(self.props['SocialMediaUrls'])):
+           if name in self.props['SocialMediaUrls'][i]['Name']:
+               self.props['SocialMediaUrls'][i]['Url'] = str(url)
 
-    def update_social_media_url_by_url(self, name, url):
-        """Find all entries matching the URL, and update their names as
-        provided."""
-        for i in range(len(self.props['SocialMediaUrls'])):
-            if url in self.props['SocialMediaUrls'][i]['Urls']:
-                self.props['SocialMediaUrls'][i]['Name'] = str(name)
+   def update_social_media_url_by_url(self, name, url):
+       """Find all entries matching the URL, and update their names as
+       provided."""
+       for i in range(len(self.props['SocialMediaUrls'])):
+           if url in self.props['SocialMediaUrls'][i]['Urls']:
+               self.props['SocialMediaUrls'][i]['Name'] = str(name)
+
+class UserPasswordData(D2LStructure):
+   def __init__(self,json_dict):
+       D2LStructure.__init__(self,json_dict)
+
+   Password = property(_get_string_prop('Password'))
 
 class Role(D2LStructure):
-    def __init__(self,json_dict):
-        D2LStructure.__init__(self,json_dict)
+   def __init__(self,json_dict):
+       D2LStructure.__init__(self,json_dict)
 
-    Identifier = property(_get_string_prop('Identifier'))
-    DisplayName = property(_get_string_prop('DisplayName'))
-    Code = property(_get_string_prop('Code'))
+   Identifier = property(_get_string_prop('Identifier'))
+   DisplayName = property(_get_string_prop('DisplayName'))
+   Code = property(_get_string_prop('Code'))
 
 ## Org unit structure concrete classes
-class OrgUnitType(D2LStructure):
-    def __init__(self,json_dict):
-        D2LStructure.__init__(self,json_dict)
+class Organization(D2LStructure):
+   def __init__(self,json_dict):
+       D2LStructure.__init__(self,json_dict)
 
-    Id = property(_get_number_prop('Id'))
-    Code = property(_get_string_prop('Code'))
-    Name = property(_get_string_prop('Name'))
-    Description = property(_get_string_prop('Description'))
-    SortOrder = property(_get_number_prop('SortOrder'))
-    CanEdit = property(_get_boolean_prop('CanEdit'))
-    CanDelete = property(_get_boolean_prop('CanDelete'))
+   Identifier = property(_get_string_prop('Identifier'))
+   Name = property(_get_string_prop('Name'))
+
+class OrgUnit(D2LStructure):
+   def __init__(self,json_dict):
+       D2LStructure.__init__(self,json_dict)
+
+   Identifier = property(_get_string_prop('Identifier'))
+   Name = property(_get_string_prop('Name'))
+   Code = property(_get_string_prop('Code'))
+
+   @property
+   def Type(self):
+       return self.props['Type']
+
+# Org unit types
+class OrgUnitType(D2LStructure):
+   def __init__(self,json_dict):
+       D2LStructure.__init__(self,json_dict)
+
+   Id = property(_get_number_prop('Id'))
+   Code = property(_get_string_prop('Code'))
+   Name = property(_get_string_prop('Name'))
+   Description = property(_get_string_prop('Description'))
+   SortOrder = property(_get_number_prop('SortOrder'))
+   CanEdit = property(_get_boolean_prop('CanEdit'))
+   CanDelete = property(_get_boolean_prop('CanDelete'))
 
 class OrgUnitTypeInfo(D2LStructure):
-    def __init__(self,json_dict):
-        D2LStructure.__init__(self,json_dict)
+   def __init__(self,json_dict):
+       D2LStructure.__init__(self,json_dict)
 
-    Id = property(_get_number_prop('Id'))
-    Code = property(_get_string_prop('Code'))
-    Name = property(_get_string_prop('Name'))
+   Id = property(_get_number_prop('Id'))
+   Code = property(_get_string_prop('Code'))
+   Name = property(_get_string_prop('Name'))
 
 ## Course offering concrete classes
 class BasicOrgUnit(D2LStructure):
-    def __init__(self,json_dict):
-        D2LStructure.__init__(self,json_dict)
+   def __init__(self,json_dict):
+       D2LStructure.__init__(self,json_dict)
 
-    Identifier = property(_get_string_prop('Identifier'))
-    Name = property(_get_string_prop('Name'))
-    Code = property(_get_string_prop('Code'))
+   Identifier = property(_get_string_prop('Identifier'))
+   Name = property(_get_string_prop('Name'))
+   Code = property(_get_string_prop('Code'))
 
 class CourseOffering(D2LStructure):
-    def __init__(self,json_dict):
-        D2LStructure.__init__(self,json_dict)
+   def __init__(self,json_dict):
+       D2LStructure.__init__(self,json_dict)
 
-    Name = property(_get_string_prop('Name'))
-    Code = property(_get_string_prop('Code'))
-    Identifier = property(_get_string_prop('Identifier'))
-    IsActive = property(_get_boolean_prop('IsActive'))
-    Path = property(_get_string_prop('Path'))
-    StartDate = property(_get_string_prop('StartDate'))
-    EndDate = property(_get_string_prop('EndDate'))
+   Name = property(_get_string_prop('Name'))
+   Code = property(_get_string_prop('Code'))
+   Identifier = property(_get_string_prop('Identifier'))
+   IsActive = property(_get_boolean_prop('IsActive'))
+   Path = property(_get_string_prop('Path'))
+   StartDate = property(_get_string_prop('StartDate'))
+   EndDate = property(_get_string_prop('EndDate'))
 
-    @property
-    def CourseTempate(self):
-        return self.props['CourseTemplate']
+   @property
+   def CourseTempate(self):
+       return self.props['CourseTemplate']
 
-    @property
-    def Semester(self):
-        return self.props['Semester']
+   @property
+   def Semester(self):
+       return self.props['Semester']
 
-    @property
-    def Department(self):
-        return self.props['Department']
+   @property
+   def Department(self):
+       return self.props['Department']
 
 class CourseOfferingInfo(D2LStructure):
-    def __init__(self,json_dict):
-        D2LStructure.__init__(self,json_dict)
+   def __init__(self,json_dict):
+       D2LStructure.__init__(self,json_dict)
 
-    @staticmethod
-    def fashion_CourseOfferingInfo(name='',
-                                   code='',
-                                   start_date=None,
-                                   end_date=None,
-                                   is_active=False):
-        coi = {'Name': name,
-               'Code': code,
-               'StartDate': start_date,
-               'EndDate': end_date,
-               'IsActive': is_active }
-        return CourseOfferingInfo(coi)
+   @staticmethod
+   def fashion_CourseOfferingInfo(name='',
+                                  code='',
+                                  start_date=None,
+                                  end_date=None,
+                                  is_active=False):
+       coi = {'Name': name,
+              'Code': code,
+              'StartDate': start_date,
+              'EndDate': end_date,
+              'IsActive': is_active }
+       return CourseOfferingInfo(coi)
 
-    Name = property(_get_string_prop('Name'), _set_string_prop('Name'))
-    Code = property(_get_string_prop('Code'), _set_string_prop('Code'))
-    StartDate = property(_get_string_prop('StartDate'), _set_string_prop('StartDate'))
-    EndDate = property(_get_string_prop('EndDate'), _set_string_prop('EndDate'))
-    IsActive = property(_get_boolean_prop('IsActive'), _set_boolean_prop('IsActive'))
+   Name = property(_get_string_prop('Name'), _set_string_prop('Name'))
+   Code = property(_get_string_prop('Code'), _set_string_prop('Code'))
+   StartDate = property(_get_string_prop('StartDate'), _set_string_prop('StartDate'))
+   EndDate = property(_get_string_prop('EndDate'), _set_string_prop('EndDate'))
+   IsActive = property(_get_boolean_prop('IsActive'), _set_boolean_prop('IsActive'))
 
 class CreateCourseOffering(D2LStructure):
-    def __init__(self,json_dict):
-        D2LStructure.__init__(self,json_dict)
+   def __init__(self,json_dict):
+       D2LStructure.__init__(self,json_dict)
 
-    @staticmethod
-    def fashion_CreateCourseOffering(name='',
-                                     code='',
-                                     path='',
-                                     course_template_id='',
-                                     semester_id=None,
-                                     start_date=None,
-                                     end_date=None,
-                                     locale_id=None,
-                                     force_locale=False,
-                                     show_address_book=False):
+   @staticmethod
+   def fashion_CreateCourseOffering(name='',
+                                    code='',
+                                    path='',
+                                    course_template_id='',
+                                    semester_id=None,
+                                    start_date=None,
+                                    end_date=None,
+                                    locale_id=None,
+                                    force_locale=False,
+                                    show_address_book=False):
 
-        cco = {'Name': name,
-               'Code': code,
-               'CourseTemplateId': course_template_id,
-               'SemesterId': semester_id,
-               'StartDate': start_date,
-               'EndDate': end_date,
-               'LocaleId': locale_id,
-               'ForceLocale': force_locale,
-               'ShowAddressBook': show_address_book }
-        return CreateCourseOffering(cco)
+       cco = {'Name': name,
+              'Code': code,
+              'CourseTemplateId': course_template_id,
+              'SemesterId': semester_id,
+              'StartDate': start_date,
+              'EndDate': end_date,
+              'LocaleId': locale_id,
+              'ForceLocale': force_locale,
+              'ShowAddressBook': show_address_book }
+       return CreateCourseOffering(cco)
 
-    Name = property(_get_string_prop('Name'), _set_string_prop('Name'))
-    Code = property(_get_string_prop('Code'), _set_string_prop('Code'))
-    Path = property(_get_string_prop('Path'), _set_string_prop('Path'))
-    CourseTemplateId = property(_get_number_prop('CourseTemplateId'), _set_number_prop('CourseTemplateId'))
-    SemesterId = property(_get_number_prop('SemesterId'), _set_number_prop('SemesterId'))
-    StartDate = property(_get_string_prop('StartDate'), _set_string_prop('StartDate'))
-    EndDate = property(_get_string_prop('EndDate'), _set_string_prop('EndDate'))
-    LocaleId = property(_get_number_prop('LocaleId'), _get_number_prop('LocaleId'))
-    ForceLocale = property(_get_boolean_prop('ForceLocale'), _set_boolean_prop('ForceLocale'))
-    ShowAddressBook = property(_get_boolean_prop('ShowAddressBook'), _set_boolean_prop('ShowAddressBook'))
+   Name = property(_get_string_prop('Name'), _set_string_prop('Name'))
+   Code = property(_get_string_prop('Code'), _set_string_prop('Code'))
+   Path = property(_get_string_prop('Path'), _set_string_prop('Path'))
+   CourseTemplateId = property(_get_number_prop('CourseTemplateId'), _set_number_prop('CourseTemplateId'))
+   SemesterId = property(_get_number_prop('SemesterId'), _set_number_prop('SemesterId'))
+   StartDate = property(_get_string_prop('StartDate'), _set_string_prop('StartDate'))
+   EndDate = property(_get_string_prop('EndDate'), _set_string_prop('EndDate'))
+   LocaleId = property(_get_number_prop('LocaleId'), _get_number_prop('LocaleId'))
+   ForceLocale = property(_get_boolean_prop('ForceLocale'), _set_boolean_prop('ForceLocale'))
+   ShowAddressBook = property(_get_boolean_prop('ShowAddressBook'), _set_boolean_prop('ShowAddressBook'))
 
 class CourseTemplate(D2LStructure):
-    def __init__(self,json_dict):
-        D2LStructure.__init__(self,json_dict)
+   def __init__(self,json_dict):
+       D2LStructure.__init__(self,json_dict)
 
-    Identifier = property(_get_string_prop('Identifier'))
-    Code = property(_get_string_prop('Code'))
-    Name = property(_get_string_prop('Name'))
-    Path = property(_get_string_prop('Path'))
+   Identifier = property(_get_string_prop('Identifier'))
+   Code = property(_get_string_prop('Code'))
+   Name = property(_get_string_prop('Name'))
+   Path = property(_get_string_prop('Path'))
 
 class CourseTemplateInfo(D2LStructure):
-    def __init__(self,json_dict):
-        D2LStructure.__init__(self,json_dict)
+   def __init__(self,json_dict):
+       D2LStructure.__init__(self,json_dict)
 
-    @staticmethod
-    def fashion_CourseTemplateInfo(name='',
-                                   code=''):
-        cti = {'Name': name, 'Code': code }
-        return CourseTemplateInfo(cti)
+   @staticmethod
+   def fashion_CourseTemplateInfo(name='',
+                                  code=''):
+       cti = {'Name': name, 'Code': code }
+       return CourseTemplateInfo(cti)
 
-    Name = property(_get_string_prop('Name'), _set_string_prop('Name'))
-    Code = property(_get_string_prop('Code'), _set_string_prop('Code'))
+   Name = property(_get_string_prop('Name'), _set_string_prop('Name'))
+   Code = property(_get_string_prop('Code'), _set_string_prop('Code'))
 
 class CreateCourseTemplate(D2LStructure):
-    def __init__(self,json_dict):
-        D2LStructure.__init__(self,json_dict)
+   def __init__(self,json_dict):
+       D2LStructure.__init__(self,json_dict)
 
-    @staticmethod
-    def fashion_CreateCourseTemplateInfo(name='',
-                                         code='',
-                                         path='',
-                                         parent_org_unit_id_list=()):
-        cct = {'Name': name, 'Code': code, 'Path': path, 'ParentOrgUnitIds': parent_org_unit_id_list}
-        return CreateCourseTemplate(cct)
+   @staticmethod
+   def fashion_CreateCourseTemplateInfo(name='',
+                                        code='',
+                                        path='',
+                                        parent_org_unit_id_list=()):
+       cct = {'Name': name, 'Code': code, 'Path': path, 'ParentOrgUnitIds': parent_org_unit_id_list}
+       return CreateCourseTemplate(cct)
 
-    Name = property(_get_string_prop('Name'), _set_string_prop('Name'))
-    Code = property(_get_string_prop('Code'), _set_string_prop('Code'))
-    Path = property(_get_string_prop('Path'), _set_string_prop('Path'))
+   Name = property(_get_string_prop('Name'), _set_string_prop('Name'))
+   Code = property(_get_string_prop('Code'), _set_string_prop('Code'))
+   Path = property(_get_string_prop('Path'), _set_string_prop('Path'))
 
-    @property
-    def ParentOrgUnitIds(self):
-        return self.props['ParentOrgUnitIds']
+   @property
+   def ParentOrgUnitIds(self):
+       return self.props['ParentOrgUnitIds']
 
-    @ParentOrgUnitIds.setter
-    def ParentOrgUnitIds(self,parent_org_unit_id_list):
-        self.props['ParentOrgUnitIds'] = parent_org_unit_id_list
+   @ParentOrgUnitIds.setter
+   def ParentOrgUnitIds(self,parent_org_unit_id_list):
+       self.props['ParentOrgUnitIds'] = parent_org_unit_id_list
 
 class CourseSchemaElement(D2LStructure):
-    def __init__(self,json_dict):
-        D2LStructure.__init__(self,json_dict)
+   def __init__(self,json_dict):
+       D2LStructure.__init__(self,json_dict)
 
-    IsNotAllowed = property(_get_boolean_prop('IsNotAllowed'))
-    IsRequired = property(_get_boolean_prop('IsRequired'))
+   IsNotAllowed = property(_get_boolean_prop('IsNotAllowed'))
+   IsRequired = property(_get_boolean_prop('IsRequired'))
 
-    @property
-    def Type(self):
-        return self.props['Type']
+   @property
+   def Type(self):
+       return self.props['Type']
 
 
 ## Enrollment concrete classes
 class ClasslistUser(D2LStructure):
-    def __init__(self,json_dict):
-        D2LStructure.__init__(self,json_dict)
+   def __init__(self,json_dict):
+       D2LStructure.__init__(self,json_dict)
 
-    Identifier = property(_get_string_prop('Identifier'))
-    ProfileIdentifier = property(_get_string_prop('ProfileIdentifier'))
-    DisplayName = property(_get_string_prop('DisplayName'))
-    UserName = property(_get_string_prop('UserName'))
-    OrgDefinedId = property(_get_string_prop('OrgDefinedId'))
-    Email = property(_get_string_prop('Email'))
+   Identifier = property(_get_string_prop('Identifier'))
+   ProfileIdentifier = property(_get_string_prop('ProfileIdentifier'))
+   DisplayName = property(_get_string_prop('DisplayName'))
+   UserName = property(_get_string_prop('UserName'))
+   OrgDefinedId = property(_get_string_prop('OrgDefinedId'))
+   Email = property(_get_string_prop('Email'))
+
+class EnrollmentData(D2LStructure):
+   def __init__(self,json_dict):
+       D2LStructure.__init__(self,json_dict)
+
+   OrgUnitId = property(_get_number_prop('OrgUnitId'))
+   UserId = property(_get_number_prop('UserId'))
+   RoleId = property(_get_number_prop('RoleId'))
+   IsCascading = property(_get_boolean_prop('IsCascading'))
 
 class MyOrgUnitInfo(D2LStructure):
-    def __init__(self,json_dict):
-        D2LStructure.__init__(self,json_dict)
+   def __init__(self,json_dict):
+       D2LStructure.__init__(self,json_dict)
 
-    @property
-    def OrgUnit(self):
-        # return OrgUnitInfo(self.props['OrgUnit']
-        return self.props['OrgUnit']
+   @property
+   def OrgUnit(self):
+       # return OrgUnitInfo(self.props['OrgUnit']
+       return self.props['OrgUnit']
 
-    @property
-    def AccessInfo(self):
-        return self.props['AccessInfo']
+   @property
+   def AccessInfo(self):
+       return self.props['AccessInfo']
 
-    @property
-    def IsActive(self):
-        return self.props['AccessInfo']['IsActive']
+   @property
+   def IsActive(self):
+       return self.props['AccessInfo']['IsActive']
 
-    @property
-    def StartDate(self):
-        return self.props['AccessInfo']['StartDate']
+   @property
+   def StartDate(self):
+       return self.props['AccessInfo']['StartDate']
 
-    @property
-    def EndDate(self):
-        return self.props['AccessInfo']['EndDate']
+   @property
+   def EndDate(self):
+       return self.props['AccessInfo']['EndDate']
 
 
-    @property
-    def CanAccess(self):
-        return self.props['AccessInfo']['EndDate']
+   @property
+   def CanAccess(self):
+       return self.props['AccessInfo']['EndDate']
 
 class OrgUnitInfo(D2LStructure):
-    def __init__(self,json_dict):
-        D2LStructure.__init__(self,json_dict)
+   def __init__(self,json_dict):
+       D2LStructure.__init__(self,json_dict)
 
-    Id = property(_get_number_prop('Id'))
-    Name = property(_get_string_prop('Name'))
-    Code = property(_get_string_prop('Code'))
+   Id = property(_get_number_prop('Id'))
+   Name = property(_get_string_prop('Name'))
+   Code = property(_get_string_prop('Code'))
 
-    @property
-    def Type(self):
-        # return OrgUnitTypeInfo(self.props['Type'])
-        return self.props['Type']
+   @property
+   def Type(self):
+       # return OrgUnitTypeInfo(self.props['Type'])
+       return self.props['Type']
 
 ## Grades concrete classes
 class GradeObject(D2LStructure):
-    def __init__(self,json_dict):
-        D2LStructure.__init__(self,json_dict)
+   def __init__(self,json_dict):
+       D2LStructure.__init__(self,json_dict)
 
-    # These two props should be read-only on every instance
-    Id = property(_get_number_prop('Id'))
-    GradeType = property(_get_string_prop('GradeType'))
+   # These two props should be read-only on every instance
+   Id = property(_get_number_prop('Id'))
+   GradeType = property(_get_string_prop('GradeType'))
 
-    Name = property(_get_string_prop('Name'), _set_string_prop('Name'))
-    ShortName = property(_get_string_prop('ShortName'), _set_string_prop('ShortName'))
-    CategoryId = property(_get_number_prop('Category'), _set_string_prop('CategoryId'))
+   Name = property(_get_string_prop('Name'), _set_string_prop('Name'))
+   ShortName = property(_get_string_prop('ShortName'), _set_string_prop('ShortName'))
+   CategoryId = property(_get_number_prop('Category'), _set_string_prop('CategoryId'))
 
-    @property
-    def Description(self):
-        return self.props['Description']
+   @property
+   def Description(self):
+       return self.props['Description']
 
-    def update_description(self, descr, is_html=False):
-        t = 'Text'
-        if is_html:
-            t = 'HTML'
-        self.props['Description'] = {'Content': descr, 'Type': t }
+   def update_description(self, descr, is_html=False):
+       t = 'Text'
+       if is_html:
+           t = 'HTML'
+       self.props['Description'] = {'Content': descr, 'Type': t }
 
 class GradeObjectNumeric(GradeObject):
-    def __init__(self,json_dict):
-        GradeObject.__init__(self,json_dict)
-        self.props['GradeType'] = 'Numeric'
+   def __init__(self,json_dict):
+       GradeObject.__init__(self,json_dict)
+       self.props['GradeType'] = 'Numeric'
 
-    MaxPoints = property(_get_number_prop('MaxPoints'), _set_number_prop('MaxPoints'))
-    CanExceedMaxPoints = property(_get_boolean_prop('CanExceedMaxPoints'),
-                                  _set_boolean_prop('CanExceedMaxPoints'))
-    IsBonus = property(_get_boolean_prop('IsBonus'), _set_boolean_prop('IsBonus'))
-    ExcludeFromFinalGradeCalculation = property(_get_boolean_prop('ExcludeFromFinalGradeCalculation'),
-                                                _set_boolean_prop('ExcludeFromFinalGradeCalculation'))
-    GradeSchemeId = property(_get_number_prop('GradeSchemeId'), _set_number_prop('GradeSchemeId'))
+   MaxPoints = property(_get_number_prop('MaxPoints'), _set_number_prop('MaxPoints'))
+   CanExceedMaxPoints = property(_get_boolean_prop('CanExceedMaxPoints'),
+                                 _set_boolean_prop('CanExceedMaxPoints'))
+   IsBonus = property(_get_boolean_prop('IsBonus'), _set_boolean_prop('IsBonus'))
+   ExcludeFromFinalGradeCalculation = property(_get_boolean_prop('ExcludeFromFinalGradeCalculation'),
+                                               _set_boolean_prop('ExcludeFromFinalGradeCalculation'))
+   GradeSchemeId = property(_get_number_prop('GradeSchemeId'), _set_number_prop('GradeSchemeId'))
 
 class GradeObjectPassFail(GradeObject):
-    def __init__(self,json_dict):
-        GradeObject.__init__(self,json_dict)
-        self.props['GradeType'] = 'PassFail'
+   def __init__(self,json_dict):
+       GradeObject.__init__(self,json_dict)
+       self.props['GradeType'] = 'PassFail'
 
-    MaxPoints = property(_get_number_prop('MaxPoints'), _set_number_prop('MaxPoints'))
-    IsBonus = property(_get_boolean_prop('IsBonus'), _set_boolean_prop('IsBonus'))
-    ExcludeFromFinalGradeCalculation = property(_get_boolean_prop('ExcludeFromFinalGradeCalculation'),
-                                                _set_boolean_prop('ExcludeFromFinalGradeCalculation'))
-    GradeSchemeId = property(_get_number_prop('GradeSchemeId'), _set_number_prop('GradeSchemeId'))
+   MaxPoints = property(_get_number_prop('MaxPoints'), _set_number_prop('MaxPoints'))
+   IsBonus = property(_get_boolean_prop('IsBonus'), _set_boolean_prop('IsBonus'))
+   ExcludeFromFinalGradeCalculation = property(_get_boolean_prop('ExcludeFromFinalGradeCalculation'),
+                                               _set_boolean_prop('ExcludeFromFinalGradeCalculation'))
+   GradeSchemeId = property(_get_number_prop('GradeSchemeId'), _set_number_prop('GradeSchemeId'))
 
 class GradeObjectSelectBox(GradeObject):
-    def __init__(self,json_dict):
-        GradeObject.__init__(self,json_dict)
-        self.props['GradeType'] = 'SelectBox'
+   def __init__(self,json_dict):
+       GradeObject.__init__(self,json_dict)
+       self.props['GradeType'] = 'SelectBox'
 
-    MaxPoints = property(_get_number_prop('MaxPoints'), _set_number_prop('MaxPoints'))
-    IsBonus = property(_get_boolean_prop('IsBonus'), _set_boolean_prop('IsBonus'))
-    ExcludeFromFinalGradeCalculation = property(_get_boolean_prop('ExcludeFromFinalGradeCalculation'),
-                                                _set_boolean_prop('ExcludeFromFinalGradeCalculation'))
-    GradeSchemeId = property(_get_number_prop('GradeSchemeId'), _set_number_prop('GradeSchemeId'))
+   MaxPoints = property(_get_number_prop('MaxPoints'), _set_number_prop('MaxPoints'))
+   IsBonus = property(_get_boolean_prop('IsBonus'), _set_boolean_prop('IsBonus'))
+   ExcludeFromFinalGradeCalculation = property(_get_boolean_prop('ExcludeFromFinalGradeCalculation'),
+                                               _set_boolean_prop('ExcludeFromFinalGradeCalculation'))
+   GradeSchemeId = property(_get_number_prop('GradeSchemeId'), _set_number_prop('GradeSchemeId'))
 
 class GradeObjectText(GradeObject):
-    def __init__(self,json_dict):
-        GradeObject.__init__(self,json_dict)
-        self.props['GradeType'] = 'Text'
-
+   def __init__(self,json_dict):
+       GradeObject.__init__(self,json_dict)
+       self.props['GradeType'] = 'Text'
 
 class GradeValue(D2LStructure):
-    def __init__(self,json_dict):
-        D2LStructure.__init__(self,json_dict)
+   def __init__(self,json_dict):
+       D2LStructure.__init__(self,json_dict)
 
-    DisplayedGrade = property(_get_string_prop('DisplayedGrade'))
-    GradeObjectIdentifier = property(_get_string_prop('GradeObjectIdentifier'))
-    GradeObjectName = property(_get_string_prop('GradeObjectName'))
-    GradeObjectType = property(_get_number_prop('GradeObjectType'))
-    GradeObjectTypeName = property(_get_string_prop('GradeObjectTypeName'))
+   DisplayedGrade = property(_get_string_prop('DisplayedGrade'))
+   GradeObjectIdentifier = property(_get_string_prop('GradeObjectIdentifier'))
+   GradeObjectName = property(_get_string_prop('GradeObjectName'))
+   GradeObjectType = property(_get_number_prop('GradeObjectType'))
+   GradeObjectTypeName = property(_get_string_prop('GradeObjectTypeName'))
 
 class GradeValueComputable(GradeValue):
-    def __init__(self,json_dict):
-        D2LStructure.__init__(self,json_dict)
+   def __init__(self,json_dict):
+       D2LStructure.__init__(self,json_dict)
 
-    PointsNumerator = property(_get_number_prop('PointsNumerator'))
-    PointsDenominator = property(_get_number_prop('PointsDenominator'))
-    WeightedNumerator = property(_get_number_prop('WeightedNumerator'))
-    WeightedDenominator = property(_get_number_prop('WeightedDenominator'))
+   PointsNumerator = property(_get_number_prop('PointsNumerator'))
+   PointsDenominator = property(_get_number_prop('PointsDenominator'))
+   WeightedNumerator = property(_get_number_prop('WeightedNumerator'))
+   WeightedDenominator = property(_get_number_prop('WeightedDenominator'))
 
+class IncomingGradeValue(D2LStructure):
+   def __init__(self,json_dict):
+       D2LStructure.__init__(self,json_dict)
+
+   GradeObjectType = property(_get_number_prop('GradeObjectType'))
+
+class IncomingGradeValueNumeric(IncomingGradeValue):
+   def __init__(self,json_dict):
+       IncomingGradeValue.__init__(self,json_dict)
+       self.props['GradeObjectType'] = 1
+
+   PointsNumerator = property(_get_number_prop('PointsNumerator'), _set_number_prop('PointsNumerator'))
+
+class IncomingGradeValuePassFail(IncomingGradeValue):
+   def __init__(self,json_dict):
+       IncomingGradeValue.__init__(self,json_dict)
+       self.props['GradeObjectType'] = 2
+
+   Pass = property(_get_boolean_prop('Pass'), _set_boolean_prop('Pass'))
+
+class IncomingGradeValueSelectBox(IncomingGradeValue):
+   def __init__(self,json_dict):
+       IncomingGradeValue.__init__(self,json_dict)
+       self.props['GradeObjectType'] = 3
+
+   Value = property(_get_string_prop('Value'), _set_string_prop('Value'))
+
+class IncomingGradeValueText(IncomingGradeValue):
+   def __init__(self,json_dict):
+       IncomingGradeValue.__init__(self,json_dict)
+       self.props['GradeObjectType'] = 4
+
+   Text = property(_get_string_prop('Text'), _set_string_prop('Text'))
 
 ## Locker concrete classes
 class LockerItem(D2LStructure):
-    def __init__(self,json_dict):
-        D2LStructure.__init__(self,json_dict)
+   def __init__(self,json_dict):
+       D2LStructure.__init__(self,json_dict)
 
-    Name = property(_get_string_prop('Name'))
-    Description = property(_get_string_prop('Description'))
-    Type = property(_get_number_prop('Type'))
-    Size = property(_get_number_prop('Size'))
-    LastModified = property(_get_string_prop('LastModified'))
+   Name = property(_get_string_prop('Name'))
+   Description = property(_get_string_prop('Description'))
+   Type = property(_get_number_prop('Type'))
+   Size = property(_get_number_prop('Size'))
+   LastModified = property(_get_string_prop('LastModified'))
 
 class LockerFolder(D2LStructure):
-    def __init__(self,json_dict):
-        D2LStructure.__init__(self,json_dict)
+   def __init__(self,json_dict):
+       D2LStructure.__init__(self,json_dict)
 
-    Name = property(_get_string_prop('Name'))
+   Name = property(_get_string_prop('Name'))
 
-    @property
-    def Contents(self):
-        return self.props['Contents']
+   @property
+   def Contents(self):
+       return self.props['Contents']
 
-    def find_locker_item(self,name):
-        result = []
-        for i in range(len(self.props['Contents'])):
-            if name in self.props['Contents'][i]['Name']:
-                result.append(self.props['Contents'][i])
-        return result
+   def find_locker_item(self,name):
+       result = []
+       for i in range(len(self.props['Contents'])):
+           if name in self.props['Contents'][i]['Name']:
+               result.append(self.props['Contents'][i])
+       return result
 
 class GroupLocker(D2LStructure):
-    def __init__(self,json_dict):
-        D2LStructure.__init__(self,json_dict)
+   def __init__(self,json_dict):
+       D2LStructure.__init__(self,json_dict)
 
-    HasLocker = property(_get_boolean_prop('HasLocker'))
+   HasLocker = property(_get_boolean_prop('HasLocker'))
 
 ## Discussion fora concrete classes
 class Forum(D2LStructure):
-    def __init__(self,json_dict):
-        D2LStructure.__init__(self,json_dict)
+   def __init__(self,json_dict):
+       D2LStructure.__init__(self,json_dict)
 
-    ForumId = property(_get_number_prop('ForumId'))
-    StartDate = property(_get_string_prop('StartDate'))
-    EndDate = property(_get_string_prop('EndDate'))
-    PostStartDate = property(_get_string_prop('PostStartDate'))
-    PostEndDate = property(_get_string_prop('PostEndDate'))
-    Name = property(_get_string_prop('Name'))
-    AllowAnonymous = property(_get_boolean_prop('AllowAnonymous'))
-    IsLocked = property(_get_boolean_prop('IsLocked'))
-    IsHidden = property(_get_boolean_prop('IsHidden'))
-    RequiresApproval = property(_get_boolean_prop('RequiresApproval'))
+   ForumId = property(_get_number_prop('ForumId'))
+   StartDate = property(_get_string_prop('StartDate'))
+   EndDate = property(_get_string_prop('EndDate'))
+   PostStartDate = property(_get_string_prop('PostStartDate'))
+   PostEndDate = property(_get_string_prop('PostEndDate'))
+   Name = property(_get_string_prop('Name'))
+   AllowAnonymous = property(_get_boolean_prop('AllowAnonymous'))
+   IsLocked = property(_get_boolean_prop('IsLocked'))
+   IsHidden = property(_get_boolean_prop('IsHidden'))
+   RequiresApproval = property(_get_boolean_prop('RequiresApproval'))
 
-    @property
-    def Description(self):
-        return self.props['Description']
+   @property
+   def Description(self):
+       return self.props['Description']
 
 class ForumData(D2LStructure):
-    def __init__(self,json_dict):
-        D2LStructure.__init__(self,json_dict)
+   def __init__(self,json_dict):
+       D2LStructure.__init__(self,json_dict)
 
-    @staticmethod
-    def fashion_ForumData(name='',
-                          text_descr='',
-                          html_descr='',
-                          start_date=None,
-                          end_date=None,
-                          post_start_date=None,
-                          post_end_date=None,
-                          allow_anonymous=False,
-                          is_locked=False,
-                          is_hidden=False,
-                          requires_approval=False):
-        fd = {'Name': name,
-               'Description': {'Text': text_descr, 'HTML': html_descr },
-               'StartDate': start_date, 'EndDate': end_date,
-               'PostStartDate': post_start_date, 'PostEndDate': post_end_date,
-               'AllowAnonymous': allow_anonymous,
-               'IsLocked': is_locked,
-               'IsHidden': is_hidden,
-               'RequiresApproval': requires_approval }
-        return ForumData(fd)
+   @staticmethod
+   def fashion_ForumData(name='',
+                         text_descr='',
+                         html_descr='',
+                         start_date=None,
+                         end_date=None,
+                         post_start_date=None,
+                         post_end_date=None,
+                         allow_anonymous=False,
+                         is_locked=False,
+                         is_hidden=False,
+                         requires_approval=False):
+       fd = {'Name': name,
+              'Description': {'Text': text_descr, 'HTML': html_descr },
+              'StartDate': start_date, 'EndDate': end_date,
+              'PostStartDate': post_start_date, 'PostEndDate': post_end_date,
+              'AllowAnonymous': allow_anonymous,
+              'IsLocked': is_locked,
+              'IsHidden': is_hidden,
+              'RequiresApproval': requires_approval }
+       return ForumData(fd)
 
-    Name = property(_get_string_prop('Name'), _set_string_prop('Name'))
-    StartDate = property(_get_string_prop('StartDate'), _set_string_prop('StartDate'))
-    EndDate = property(_get_string_prop('EndDate'), _set_string_prop('EndDate'))
-    PostStartDate = property(_get_string_prop('PostStartDate'), _set_string_prop('PostStartDate'))
-    PostEndDate = property(_get_string_prop('PostEndDate'), _set_string_prop('PostEndDate'))
-    AllowAnonymous = property(_get_boolean_prop('AllowAnonymous'), _set_boolean_prop('AllowAnonymous'))
-    IsLocked = property(_get_boolean_prop('IsLocked'), _set_boolean_prop('IsLocked'))
-    IsHidden = property(_get_boolean_prop('IsHidden'), _set_boolean_prop('IsHidden'))
-    RequiresApproval = property(_get_boolean_prop('RequiresApproval'), _set_boolean_prop('RequiresApproval'))
+   Name = property(_get_string_prop('Name'), _set_string_prop('Name'))
+   StartDate = property(_get_string_prop('StartDate'), _set_string_prop('StartDate'))
+   EndDate = property(_get_string_prop('EndDate'), _set_string_prop('EndDate'))
+   PostStartDate = property(_get_string_prop('PostStartDate'), _set_string_prop('PostStartDate'))
+   PostEndDate = property(_get_string_prop('PostEndDate'), _set_string_prop('PostEndDate'))
+   AllowAnonymous = property(_get_boolean_prop('AllowAnonymous'), _set_boolean_prop('AllowAnonymous'))
+   IsLocked = property(_get_boolean_prop('IsLocked'), _set_boolean_prop('IsLocked'))
+   IsHidden = property(_get_boolean_prop('IsHidden'), _set_boolean_prop('IsHidden'))
+   RequiresApproval = property(_get_boolean_prop('RequiresApproval'), _set_boolean_prop('RequiresApproval'))
 
-    @property
-    def Description(self):
-        return self.props['Description']
+   @property
+   def Description(self):
+       return self.props['Description']
 
-    def update_description(self, text_descr='', html_descr=''):
-        self.props['Description'] = {'Text': text_descr, 'HTML': html_descr }
+   def update_description(self, text_descr='', html_descr=''):
+       self.props['Description'] = {'Text': text_descr, 'HTML': html_descr }
 
 class ForumUpdateData(D2LStructure):
-    def __init__(self,json_dict):
-        D2LStructure.__init__(self,json_dict)
+   def __init__(self,json_dict):
+       D2LStructure.__init__(self,json_dict)
 
-    @staticmethod
-    def fashion_ForumUpdateData(name='',
-                                text_descr='',
-                                html_descr='',
-                                allow_anonymous=False,
-                                is_locked=False,
-                                is_hidden=False,
-                                requires_approval=False):
-        fud = {'Name': name,
-               'Description': {'Text': text_descr, 'HTML': html_descr },
-               'AllowAnonymous': allow_anonymous,
-               'IsLocked': is_locked,
-               'IsHidden': is_hidden,
-               'RequiresApproval': requires_approval }
-        return ForumUpdateData(fud)
+   @staticmethod
+   def fashion_ForumUpdateData(name='',
+                               text_descr='',
+                               html_descr='',
+                               allow_anonymous=False,
+                               is_locked=False,
+                               is_hidden=False,
+                               requires_approval=False):
+       fud = {'Name': name,
+              'Description': {'Text': text_descr, 'HTML': html_descr },
+              'AllowAnonymous': allow_anonymous,
+              'IsLocked': is_locked,
+              'IsHidden': is_hidden,
+              'RequiresApproval': requires_approval }
+       return ForumUpdateData(fud)
 
-    Name = property(_get_string_prop('Name'), _set_string_prop('Name'))
-    AllowAnonymous = property(_get_boolean_prop('AllowAnonymous'), _set_boolean_prop('AllowAnonymous'))
-    IsLocked = property(_get_boolean_prop('IsLocked'), _set_boolean_prop('IsLocked'))
-    IsHidden = property(_get_boolean_prop('IsHidden'), _set_boolean_prop('IsHidden'))
-    RequiresApproval = property(_get_boolean_prop('RequiresApproval'), _set_boolean_prop('RequiresApproval'))
+   Name = property(_get_string_prop('Name'), _set_string_prop('Name'))
+   AllowAnonymous = property(_get_boolean_prop('AllowAnonymous'), _set_boolean_prop('AllowAnonymous'))
+   IsLocked = property(_get_boolean_prop('IsLocked'), _set_boolean_prop('IsLocked'))
+   IsHidden = property(_get_boolean_prop('IsHidden'), _set_boolean_prop('IsHidden'))
+   RequiresApproval = property(_get_boolean_prop('RequiresApproval'), _set_boolean_prop('RequiresApproval'))
 
-    @property
-    def Description(self):
-        return self.props['Description']
+   @property
+   def Description(self):
+       return self.props['Description']
 
-    def update_description(self, text_descr='', html_descr=''):
-        self.props['Description'] = {'Text': text_descr, 'HTML': html_descr }
+   def update_description(self, text_descr='', html_descr=''):
+       self.props['Description'] = {'Text': text_descr, 'HTML': html_descr }
 
 class Topic(D2LStructure):
-    def __init__(self,json_dict):
-        D2LStructure.__init__(self,json_dict)
+   def __init__(self,json_dict):
+       D2LStructure.__init__(self,json_dict)
 
-    ForumId = property(_get_number_prop('ForumId'))
-    TopicId = property(_get_number_prop('TopicId'))
-    Name = property(_get_string_prop('Name'))
-    StartDate = property(_get_string_prop('StartDate'))
-    EndDate = property(_get_string_prop('EndDate'))
-    UnlockStartDate = property(_get_string_prop('UnlockStartDate'))
-    UnlockEndDate = property(_get_string_prop('UnlockEndDate'))
-    IsLocked = property(_get_boolean_prop('IsLocked'))
-    AllowAnonymousPosts = property(_get_boolean_prop('AllowAnonymousPosts'))
-    RequiresApproval = property(_get_boolean_prop('RequiresApproval'))
-    UnApprovedPostCount = property(_get_number_prop('UnApprovedPostCount'))
-    PinnedPostCount = property(_get_number_prop('PinnedPostCount'))
-    ScoringType = property(_get_string_prop('ScoringType'))
-    IsAutoScore = property(_get_boolean_prop('IsAutoScore'))
-    ScoreOutOf = property(_get_number_prop('ScoreOutOf'))
-    IncludeNonScoredValues = property(_get_boolean_prop('IncludeNonScoredValues'))
-    ScoredCount = property(_get_number_prop('ScoredCount'))
-    RatingsSum = property(_get_number_prop('RatingsSum'))
-    RatingsCount = property(_get_number_prop('RatingsCount'))
-    IsHidden = property(_get_boolean_prop('IsHidden'))
-    MustPostToParticipate = property(_get_boolean_prop('MustPostToParticipate'))
+   ForumId = property(_get_number_prop('ForumId'))
+   TopicId = property(_get_number_prop('TopicId'))
+   Name = property(_get_string_prop('Name'))
+   StartDate = property(_get_string_prop('StartDate'))
+   EndDate = property(_get_string_prop('EndDate'))
+   UnlockStartDate = property(_get_string_prop('UnlockStartDate'))
+   UnlockEndDate = property(_get_string_prop('UnlockEndDate'))
+   IsLocked = property(_get_boolean_prop('IsLocked'))
+   AllowAnonymousPosts = property(_get_boolean_prop('AllowAnonymousPosts'))
+   RequiresApproval = property(_get_boolean_prop('RequiresApproval'))
+   UnApprovedPostCount = property(_get_number_prop('UnApprovedPostCount'))
+   PinnedPostCount = property(_get_number_prop('PinnedPostCount'))
+   ScoringType = property(_get_string_prop('ScoringType'))
+   IsAutoScore = property(_get_boolean_prop('IsAutoScore'))
+   ScoreOutOf = property(_get_number_prop('ScoreOutOf'))
+   IncludeNonScoredValues = property(_get_boolean_prop('IncludeNonScoredValues'))
+   ScoredCount = property(_get_number_prop('ScoredCount'))
+   RatingsSum = property(_get_number_prop('RatingsSum'))
+   RatingsCount = property(_get_number_prop('RatingsCount'))
+   IsHidden = property(_get_boolean_prop('IsHidden'))
+   MustPostToParticipate = property(_get_boolean_prop('MustPostToParticipate'))
 
-    @property
-    def Description(self):
-        return self.props['Description']
+   @property
+   def Description(self):
+       return self.props['Description']
 
 class CreateTopicData(D2LStructure):
-    def __init__(self,json_dict):
-        D2LStructure.__init__(self,json_dict)
+   def __init__(self,json_dict):
+       D2LStructure.__init__(self,json_dict)
 
-    @staticmethod
-    def fashion_CreateTopicData(name='',
-                                descr='', is_html=False,
-                                allow_anonymous_posts=False,
-                                start_date=None,
-                                end_date=None,
-                                is_hidden=False,
-                                unlock_start_date=None,
-                                unlock_end_date=None,
-                                requires_approval=False,
-                                score_out_of=None,
-                                is_auto_score=False,
-                                include_non_scored_values=False,
-                                scoring_type=None,
-                                is_locked=False,
-                                must_post_to_participate=False):
+   @staticmethod
+   def fashion_CreateTopicData(name='',
+                               descr='', is_html=False,
+                               allow_anonymous_posts=False,
+                               start_date=None,
+                               end_date=None,
+                               is_hidden=False,
+                               unlock_start_date=None,
+                               unlock_end_date=None,
+                               requires_approval=False,
+                               score_out_of=None,
+                               is_auto_score=False,
+                               include_non_scored_values=False,
+                               scoring_type=None,
+                               is_locked=False,
+                               must_post_to_participate=False):
 
-        t = 'Text'
-        if is_html:
-            t = 'HTML'
-        ctd = {'Name': name,
-               'Description': {'Content': descr, 'Type': t},
-               'AllowAnonymousPosts': allow_anonymous_posts,
-               'StartDate': start_date,
-               'EndDate': end_date,
-               'IsHidden': is_hidden,
-               'UnlockStartDate': unlock_start_date,
-               'UnlockEndDate': unlock_end_date,
-               'RequiresApproval': requires_approval,
-               'ScoreOutOf': score_out_of,
-               'IsAutoScore': is_auto_score,
-               'IncludeNonScoredValues': include_non_scored_values,
-               'ScoringType': scoring_type,
-               'IsLocked': is_locked,
-               'MustPostToParticipate': must_post_to_participate }
-        return CreateTopicData(ctd)
+       t = 'Text'
+       if is_html:
+           t = 'HTML'
+       ctd = {'Name': name,
+              'Description': {'Content': descr, 'Type': t},
+              'AllowAnonymousPosts': allow_anonymous_posts,
+              'StartDate': start_date,
+              'EndDate': end_date,
+              'IsHidden': is_hidden,
+              'UnlockStartDate': unlock_start_date,
+              'UnlockEndDate': unlock_end_date,
+              'RequiresApproval': requires_approval,
+              'ScoreOutOf': score_out_of,
+              'IsAutoScore': is_auto_score,
+              'IncludeNonScoredValues': include_non_scored_values,
+              'ScoringType': scoring_type,
+              'IsLocked': is_locked,
+              'MustPostToParticipate': must_post_to_participate }
+       return CreateTopicData(ctd)
 
-    Name = property(_get_string_prop('Name'), _set_string_prop('Name'))
-    AllowAnonymousPosts = property(_get_boolean_prop('AllowAnonymousPosts'), _set_boolean_prop('AllowAnonymousPosts'))
-    StartDate = property(_get_string_prop('StartDate'), _set_string_prop('StartDate'))
-    EndDate = property(_get_string_prop('EndDate'), _set_string_prop('EndDate'))
-    IsHidden = property(_get_boolean_prop('IsHidden'), _set_boolean_prop('IsHidden'))
-    UnlockStartDate = property(_get_string_prop('UnlockStartDate'), _set_string_prop('UnlockStartDate'))
-    UnlockEndDate = property(_get_string_prop('UnlockEndDate'), _set_string_prop('UnlockEndDate'))
-    RequiresApproval = property(_get_boolean_prop('RequiresApproval'), _set_boolean_prop('RequiresApproval'))
-    ScoreOutOf = property(_get_number_prop('ScoreOutOf'), _set_number_prop('ScoreOutOf'))
-    IsAutoScore = property(_get_boolean_prop('IsAutoScore'), _set_boolean_prop('IsAutoScore'))
-    IncludeNonScoredValues = property(_get_boolean_prop('IncludeNonScoredValues'), _set_boolean_prop('IncludeNonScoredValues'))
-    ScoringType = property(_get_string_prop('ScoringType'), _set_string_prop('ScoringType'))
-    IsLocked = property(_get_boolean_prop('IsLocked'), _set_boolean_prop('IsLocked'))
-    MustPostToParticipate = property(_get_boolean_prop('MustPostToParticipate'), _set_boolean_prop('MustPostToParticipate'))
+   Name = property(_get_string_prop('Name'), _set_string_prop('Name'))
+   AllowAnonymousPosts = property(_get_boolean_prop('AllowAnonymousPosts'), _set_boolean_prop('AllowAnonymousPosts'))
+   StartDate = property(_get_string_prop('StartDate'), _set_string_prop('StartDate'))
+   EndDate = property(_get_string_prop('EndDate'), _set_string_prop('EndDate'))
+   IsHidden = property(_get_boolean_prop('IsHidden'), _set_boolean_prop('IsHidden'))
+   UnlockStartDate = property(_get_string_prop('UnlockStartDate'), _set_string_prop('UnlockStartDate'))
+   UnlockEndDate = property(_get_string_prop('UnlockEndDate'), _set_string_prop('UnlockEndDate'))
+   RequiresApproval = property(_get_boolean_prop('RequiresApproval'), _set_boolean_prop('RequiresApproval'))
+   ScoreOutOf = property(_get_number_prop('ScoreOutOf'), _set_number_prop('ScoreOutOf'))
+   IsAutoScore = property(_get_boolean_prop('IsAutoScore'), _set_boolean_prop('IsAutoScore'))
+   IncludeNonScoredValues = property(_get_boolean_prop('IncludeNonScoredValues'), _set_boolean_prop('IncludeNonScoredValues'))
+   ScoringType = property(_get_string_prop('ScoringType'), _set_string_prop('ScoringType'))
+   IsLocked = property(_get_boolean_prop('IsLocked'), _set_boolean_prop('IsLocked'))
+   MustPostToParticipate = property(_get_boolean_prop('MustPostToParticipate'), _set_boolean_prop('MustPostToParticipate'))
 
-    @property
-    def Description(self):
-        return self.props['Description']
+   @property
+   def Description(self):
+       return self.props['Description']
 
-    def update_description(self, descr, is_html=False):
-        t = 'Text'
-        if is_html:
-            t = 'HTML'
-        self.props['Description'] = {'Content': descr, 'Type': t }
+   def update_description(self, descr, is_html=False):
+       t = 'Text'
+       if is_html:
+           t = 'HTML'
+       self.props['Description'] = {'Content': descr, 'Type': t }
 
 class Post(D2LStructure):
-    def __init__(self,json_dict):
-        D2LStructure.__init__(self,json_dict)
+   def __init__(self,json_dict):
+       D2LStructure.__init__(self,json_dict)
 
-    ForumId = property(_get_number_prop('ForumId'))
-    TopicId = property(_get_number_prop('TopicId'))
-    PostId = property(_get_number_prop('PostId'))
-    PostingUserId = property(_get_number_prop('PostingUserId'))
-    ThreadId = property(_get_number_prop('ThreadId'))
-    ParentPostId = property(_get_number_prop('ParentPostId'))
-    Subject = property(_get_string_prop('Subject'))
-    DatePosted = property(_get_string_prop('DatePosted'))
-    IsAnonymous = property(_get_boolean_prop('IsAnonymous'))
-    RequiresApproval = property(_get_boolean_prop('RequiresApproval'))
-    IsDeleted = property(_get_boolean_prop('IsDeleted'))
-    LastEditedDate = property(_get_string_prop('LastEditedDate'))
-    LastEditedBy = property(_get_number_prop('LastEditedBy'))
-    CanRate = property(_get_boolean_prop('CanRate'))
+   ForumId = property(_get_number_prop('ForumId'))
+   TopicId = property(_get_number_prop('TopicId'))
+   PostId = property(_get_number_prop('PostId'))
+   PostingUserId = property(_get_number_prop('PostingUserId'))
+   ThreadId = property(_get_number_prop('ThreadId'))
+   ParentPostId = property(_get_number_prop('ParentPostId'))
+   Subject = property(_get_string_prop('Subject'))
+   DatePosted = property(_get_string_prop('DatePosted'))
+   IsAnonymous = property(_get_boolean_prop('IsAnonymous'))
+   RequiresApproval = property(_get_boolean_prop('RequiresApproval'))
+   IsDeleted = property(_get_boolean_prop('IsDeleted'))
+   LastEditedDate = property(_get_string_prop('LastEditedDate'))
+   LastEditedBy = property(_get_number_prop('LastEditedBy'))
+   CanRate = property(_get_boolean_prop('CanRate'))
 
-    @property
-    def Message(self):
-        return self.props['Message']
+   @property
+   def Message(self):
+       return self.props['Message']
 
-    def ReplyPostIds(self):
-        return self.props['ReplyPostIds']
+   def ReplyPostIds(self):
+       return self.props['ReplyPostIds']
 
 class CreatePostData(D2LStructure):
-    def __init__(self,json_dict):
-        D2LStructure.__init__(self,json_dict)
+   def __init__(self,json_dict):
+       D2LStructure.__init__(self,json_dict)
 
-    @staticmethod
-    def fashion_CreatePostData(parent_post_id=None,
-                               subject='',
-                               message='', is_html=False,
-                               is_anonymous=False):
-        t = 'Text'
-        if is_html:
-            t = 'HTML'
-        cpd = {'ParentPostId': parent_post_id,
-                'Subject': subject,
-                'Message': {'Content': message, 'Type': t},
-                'IsAnonymous': is_anonymous }
-        return CreatePostData(cpd)
+   @staticmethod
+   def fashion_CreatePostData(parent_post_id=None,
+                              subject='',
+                              message='', is_html=False,
+                              is_anonymous=False):
+       t = 'Text'
+       if is_html:
+           t = 'HTML'
+       cpd = {'ParentPostId': parent_post_id,
+               'Subject': subject,
+               'Message': {'Content': message, 'Type': t},
+               'IsAnonymous': is_anonymous }
+       return CreatePostData(cpd)
 
-    ParentPostId = property(_get_number_prop('ParentPostId'), _set_number_prop('ParentPostId'))
-    Subject = property(_get_string_prop('Subject'), _set_string_prop('Subject'))
-    IsAnonymous = property(_get_boolean_prop('IsAnonymous'), _set_boolean_prop('IsAnonymous'))
+   ParentPostId = property(_get_number_prop('ParentPostId'), _set_number_prop('ParentPostId'))
+   Subject = property(_get_string_prop('Subject'), _set_string_prop('Subject'))
+   IsAnonymous = property(_get_boolean_prop('IsAnonymous'), _set_boolean_prop('IsAnonymous'))
 
-    @property
-    def Message(self):
-        return self.props['Message']
+   @property
+   def Message(self):
+       return self.props['Message']
 
-    def update_message(self, descr, is_html=False):
-        t = 'Text'
-        if is_html:
-            t = 'HTML'
-        self.props['Message'] = {'Content': descr, 'Type': t }
+   def update_message(self, descr, is_html=False):
+       t = 'Text'
+       if is_html:
+           t = 'HTML'
+       self.props['Message'] = {'Content': descr, 'Type': t }
 
 class UpdatePostData(D2LStructure):
-    def __init__(self,json_dict):
-        D2LStructure.__init__(self,json_dict)
+   def __init__(self,json_dict):
+       D2LStructure.__init__(self,json_dict)
 
-    @staticmethod
-    def fashion_UpdatePostData(subject='',
-                               message='', is_html=False):
-        t = 'Text'
-        if is_html:
-            t = 'HTML'
-        upd = {'Subject': subject,
-               'Message': {'Content': message, 'Type': t} }
-        return UpdatePostData(upd)
+   @staticmethod
+   def fashion_UpdatePostData(subject='',
+                              message='', is_html=False):
+       t = 'Text'
+       if is_html:
+           t = 'HTML'
+       upd = {'Subject': subject,
+              'Message': {'Content': message, 'Type': t} }
+       return UpdatePostData(upd)
 
-    Subject = property(_get_string_prop('Subject'), _set_string_prop('Subject'))
+   Subject = property(_get_string_prop('Subject'), _set_string_prop('Subject'))
 
-    @property
-    def Message(self):
-        return self.props['Message']
+   @property
+   def Message(self):
+       return self.props['Message']
 
-    def update_message(self, descr, is_html=False):
-        t = 'Text'
-        if is_html:
-            t = 'HTML'
-        self.props['Message'] = {'Content': descr, 'Type': t }
+   def update_message(self, descr, is_html=False):
+       t = 'Text'
+       if is_html:
+           t = 'HTML'
+       self.props['Message'] = {'Content': descr, 'Type': t }
 
 
 class GroupRestriction(D2LStructure):
-    def __init__(self,json_dict):
-        D2LStructure.__init__(self,json_dict)
+   def __init__(self,json_dict):
+       D2LStructure.__init__(self,json_dict)
 
-    @staticmethod
-    def fashion_GroupRestriction(group_id):
-        gr = { 'GroupRestriction': {'GroupId': group_id}}
-        return GroupRestriction(gr)
+   @staticmethod
+   def fashion_GroupRestriction(group_id):
+       gr = { 'GroupRestriction': {'GroupId': group_id}}
+       return GroupRestriction(gr)
 
-    @property
-    def GroupRestriction(self):
-        return self.props['GroupRestriction']
+   @property
+   def GroupRestriction(self):
+       return self.props['GroupRestriction']
 
-    def update_group_restriction(self,group_id):
-        self.props['GroupRestriction'] = {'GroupId':group_id}
+   def update_group_restriction(self,group_id):
+       self.props['GroupRestriction'] = {'GroupId':group_id}
 
 class ApprovalData(D2LStructure):
-    def __init__(self,json_dict):
-        D2LStructure.__init__(self,json_dict)
+   def __init__(self,json_dict):
+       D2LStructure.__init__(self,json_dict)
 
-    @staticmethod
-    def fashion_ApprovalData(is_approved=False):
-        ad = {'IsApproved': is_approved}
-        return ApprovalData(ad)
+   @staticmethod
+   def fashion_ApprovalData(is_approved=False):
+       ad = {'IsApproved': is_approved}
+       return ApprovalData(ad)
 
-    IsApproved = property(_get_boolean_prop('IsApproved'), _set_boolean_prop('IsApproved'))
+   IsApproved = property(_get_boolean_prop('IsApproved'), _set_boolean_prop('IsApproved'))
 
 class FlagData(D2LStructure):
-    def __init__(self,json_dict):
-        D2LStructure.__init__(self,json_dict)
+   def __init__(self,json_dict):
+       D2LStructure.__init__(self,json_dict)
 
-    @staticmethod
-    def fashion_FlagData(is_flagged=False):
-        ad = {'IsFlagged': is_flagged}
-        return FlagData(ad)
+   @staticmethod
+   def fashion_FlagData(is_flagged=False):
+       ad = {'IsFlagged': is_flagged}
+       return FlagData(ad)
 
-    IsFlagged = property(_get_boolean_prop('IsFlagged'), _set_boolean_prop('IsFlagged'))
+   IsFlagged = property(_get_boolean_prop('IsFlagged'), _set_boolean_prop('IsFlagged'))
 
 class RatingData(D2LStructure):
-    def __init__(self,json_dict):
-        D2LStructure.__init__(self,json_dict)
+   def __init__(self,json_dict):
+       D2LStructure.__init__(self,json_dict)
 
-    CanRate = property(_get_boolean_prop('CanRate'))
-    RatingsSum = property(_get_number_prop('RatingsSum'))
-    RatingsCount = property(_get_number_prop('RatingsCount'))
-    RatingsAverage = property(_get_number_prop('RatingsAverage'))
+   CanRate = property(_get_boolean_prop('CanRate'))
+   RatingsSum = property(_get_number_prop('RatingsSum'))
+   RatingsCount = property(_get_number_prop('RatingsCount'))
+   RatingsAverage = property(_get_number_prop('RatingsAverage'))
 
-    @property
-    def UserRating(self):
-        return self.props['UserRating']
+   @property
+   def UserRating(self):
+       return self.props['UserRating']
 
-    @property
-    def Rating(self):
-        return self.props['UserRating']['Rating']
+   @property
+   def Rating(self):
+       return self.props['UserRating']['Rating']
 
 class UserRatingData(D2LStructure):
-    def __init__(self,json_dict):
-        D2LStructure.__init__(self,json_dict)
+   def __init__(self,json_dict):
+       D2LStructure.__init__(self,json_dict)
 
-    @staticmethod
-    def _choose_rating(rating):
-        _ratings = ['one','two','three','four','five']
-        r = None
-        if isinstance( rating, str):
-            if rating.lower() in _ratings:
-                r = _ratings.index(rating.lower()) + 1
-            else:
-                raise ValueError('Bad rating: must be in ' + str(_ratings) + ' or equivalent integer value')
-        else:
-            try:
-                r = int(rating)
-                r = 1 if r < 1 else 5 if r > 5 else r
-            except TypeError:
-                raise ValueError('Bad rating: must be in ' + str(_ratings) + ' or equivalent integer value')
-        return r
+   @staticmethod
+   def _choose_rating(rating):
+       _ratings = ['one','two','three','four','five']
+       r = None
+       if isinstance( rating, str):
+           if rating.lower() in _ratings:
+               r = _ratings.index(rating.lower()) + 1
+           else:
+               raise ValueError('Bad rating: must be in ' + str(_ratings) + ' or equivalent integer value')
+       else:
+           try:
+               r = int(rating)
+               r = 1 if r < 1 else 5 if r > 5 else r
+           except TypeError:
+               raise ValueError('Bad rating: must be in ' + str(_ratings) + ' or equivalent integer value')
+       return r
 
-    @staticmethod
-    def fashion_UserRatingData(value):
-        r = UserRatingData._choose_rating(value)
-        return UserRatingData({'Rating': r})
+   @staticmethod
+   def fashion_UserRatingData(value):
+       r = UserRatingData._choose_rating(value)
+       return UserRatingData({'Rating': r})
 
-    @property
-    def Rating(self):
-        return self.props['Rating']
+   @property
+   def Rating(self):
+       return self.props['Rating']
 
-    @Rating.setter
-    def UserRating(self, value):
-        r = _choose_rating(value)
-        self.props['Rating'] = r
+   @Rating.setter
+   def UserRating(self, value):
+       r = _choose_rating(value)
+       self.props['Rating'] = r
 
 
 class ReadStatusData(D2LStructure):
-    def __init__(self,json_dict):
-        D2LStructure.__init__(self,json_dict)
+   def __init__(self,json_dict):
+       D2LStructure.__init__(self,json_dict)
 
-    @staticmethod
-    def fashion_ReadStatusData(is_read=False):
-        rsd = {'IsRead': is_read}
-        return ReadStatusData(rsd)
+   @staticmethod
+   def fashion_ReadStatusData(is_read=False):
+       rsd = {'IsRead': is_read}
+       return ReadStatusData(rsd)
 
-    IsRead = property(_get_boolean_prop('IsRead'), _set_boolean_prop('IsRead'))
+   IsRead = property(_get_boolean_prop('IsRead'), _set_boolean_prop('IsRead'))
+
+## News concrete classes
+class NewsItem(D2LStructure):
+   def __init__(self,json_dict):
+       D2LStructure.__init__(self,json_dict)
+
+   Id = property(_get_number_prop('Id'))
+   IsHidden = property(_get_boolean_prop('IsHidden'))
+   Title = property(_get_string_prop('Title'))
+   StartDate = property(_get_string_prop('StartDate'))
+   EndDate = property(_get_string_prop('EndDate'))
+   IsGlobal = property(_get_boolean_prop('IsGlobal'))
+   IsPublished = property(_get_boolean_prop('IsPublished'))
+   ShowOnlyInCourseOfferings = property(_get_boolean_prop('ShowOnlyInCourseOfferings'))
+
+   @property
+   def Attachments(self):
+       return self.props['Attachments']
+
+   @property
+   def Body(self):
+       return self.props['Body']
 
 ## Content concrete classes
 class ContentObjectModule(D2LStructure):
-    def __init__(self,json_dict):
-        D2LStructure.__init__(self,json_dict)
+   def __init__(self,json_dict):
+       D2LStructure.__init__(self,json_dict)
 
-    ModuleStartDate = property(_get_string_prop('ModuleStartDate'))
-    ModuleEndDate = property(_get_string_prop('ModuleEndDate'))
-    IsHidden = property(_get_boolean_prop('IsHidden'))
-    IsLocked = property(_get_boolean_prop('IsLocked'))
-    Id = property(_get_number_prop('Id'))
-    Title = property(_get_string_prop('Title'))
-    ShortTitle = property(_get_string_prop('ShortTitle'))
-    Type = property(_get_number_prop('Type'))
+   ModuleStartDate = property(_get_string_prop('ModuleStartDate'))
+   ModuleEndDate = property(_get_string_prop('ModuleEndDate'))
+   IsHidden = property(_get_boolean_prop('IsHidden'))
+   IsLocked = property(_get_boolean_prop('IsLocked'))
+   Id = property(_get_number_prop('Id'))
+   Title = property(_get_string_prop('Title'))
+   ShortTitle = property(_get_string_prop('ShortTitle'))
+   Type = property(_get_number_prop('Type'))
 
-    @property
-    def Structure(self):
-        return self.props['Structure']
+   @property
+   def Structure(self):
+       return self.props['Structure']
 
 class ContentObjectTopic(D2LStructure):
-    def __init__(self,json_dict):
-        D2LStructure.__init__(self,json_dict)
+   def __init__(self,json_dict):
+       D2LStructure.__init__(self,json_dict)
 
-    TopicType = property(_get_number_prop('TopicType'))
-    Url = property(_get_string_prop('Url'))
-    StartDate = property(_get_string_prop('StartDte'))
-    EndDate = property(_get_string_prop('EndDate'))
-    IsHidden = property(_get_boolean_prop('IsHidden'))
-    IsLocked = property(_get_boolean_prop('IsLocked'))
-    Id = property(_get_number_prop('Id'))
-    Title = property(_get_string_prop('Title'))
-    ShortTitle = property(_get_string_prop('ShortTitle'))
-    Type = property(_get_number_prop('Type'))
+   TopicType = property(_get_number_prop('TopicType'))
+   Url = property(_get_string_prop('Url'))
+   StartDate = property(_get_string_prop('StartDte'))
+   EndDate = property(_get_string_prop('EndDate'))
+   IsHidden = property(_get_boolean_prop('IsHidden'))
+   IsLocked = property(_get_boolean_prop('IsLocked'))
+   Id = property(_get_number_prop('Id'))
+   Title = property(_get_string_prop('Title'))
+   ShortTitle = property(_get_string_prop('ShortTitle'))
+   Type = property(_get_number_prop('Type'))
 
 class ContentObjectModuleData(D2LStructure):
-    def __init__(self,json_dict):
-        D2LStructure.__init__(self,json_dict)
+   def __init__(self,json_dict):
+       D2LStructure.__init__(self,json_dict)
 
-    @staticmethod
-    def fashion_ContentObjectModuleData(module_start_date=None,
-                                        module_end_date=None,
-                                        is_hidden=False,
-                                        is_locked=False,
-                                        title='',
-                                        short_title=''):
-        comd = {'ModuleStartDate': module_start_date,
-                'ModuleEndDate': module_end_date,
-                'IsHidden': is_hidden,
-                'IsLocked': is_locked,
-                'Title': title,
-                'ShortTitle': short_title,
-                'Type': 0 }
-        return ContentObjectModuleData(comd)
-
-    ModuleStartDate = property(_get_string_prop('ModuleStartDate'),_set_string_prop('ModuleStartDate'))
-    ModuleEndDate = property(_get_string_prop('ModuleEndDate'),_set_string_prop('ModuleEndDate'))
-    IsHidden = property(_get_boolean_prop('IsHidden'),_set_boolean_prop('IsHidden'))
-    IsLocked = property(_get_boolean_prop('IsLocked'),_set_boolean_prop('IsLocked'))
-    Title = property(_get_string_prop('Title'),_set_string_prop('Title'))
-    ShortTitle = property(_get_string_prop('ShortTitle'),_set_string_prop('ShortTitle'))
-    Type = property(_get_number_prop('Type'))
-
-class ContentObjectTopicData(D2LStructure):
-    def __init__(self,json_dict):
-        D2LStructure.__init__(self,json_dict)
-
-    @staticmethod
-    def fashion_ContentObjectTopicData(topic_type='',
-                                       url='',
-                                       start_date=None,
-                                       end_date=None,
+   @staticmethod
+   def fashion_ContentObjectModuleData(module_start_date=None,
+                                       module_end_date=None,
                                        is_hidden=False,
                                        is_locked=False,
                                        title='',
                                        short_title=''):
-        cotd = {'TopicType': topic_type,
-                'Url': url,
-                'StartDate': start_date,
-                'EndDate': end_date,
-                'IsHidden': is_hidden,
-                'IsLocked': is_locked,
-                'Title': title,
-                'ShortTitle': short_title,
-                'Type': 1 }
-        return ContentObjectTopicData(cotd)
+       comd = {'ModuleStartDate': module_start_date,
+               'ModuleEndDate': module_end_date,
+               'IsHidden': is_hidden,
+               'IsLocked': is_locked,
+               'Title': title,
+               'ShortTitle': short_title,
+               'Type': 0 }
+       return ContentObjectModuleData(comd)
 
-    TopicType = property(_get_number_prop('TopicType'),_set_number_prop('TopicType'))
-    Url = property(_get_string_prop('Url'),_set_string_prop('Url'))
-    StartDate = property(_get_string_prop('StartDte'),_set_string_prop('StartDate'))
-    EndDate = property(_get_string_prop('EndDate'),_set_string_prop('EndDate'))
-    IsHidden = property(_get_boolean_prop('IsHidden'),_set_boolean_prop('IsHidden'))
-    IsLocked = property(_get_boolean_prop('IsLocked'),_set_boolean_prop('IsLocked'))
-    Title = property(_get_string_prop('Title'),_set_string_prop('Title'))
-    ShortTitle = property(_get_string_prop('ShortTitle'),_set_string_prop('ShortTitle'))
-    Type = property(_get_number_prop('Type'),_set_number_prop('Type'))
+   ModuleStartDate = property(_get_string_prop('ModuleStartDate'),_set_string_prop('ModuleStartDate'))
+   ModuleEndDate = property(_get_string_prop('ModuleEndDate'),_set_string_prop('ModuleEndDate'))
+   IsHidden = property(_get_boolean_prop('IsHidden'),_set_boolean_prop('IsHidden'))
+   IsLocked = property(_get_boolean_prop('IsLocked'),_set_boolean_prop('IsLocked'))
+   Title = property(_get_string_prop('Title'),_set_string_prop('Title'))
+   ShortTitle = property(_get_string_prop('ShortTitle'),_set_string_prop('ShortTitle'))
+   Type = property(_get_number_prop('Type'))
+
+class ContentObjectTopicData(D2LStructure):
+   def __init__(self,json_dict):
+       D2LStructure.__init__(self,json_dict)
+
+   @staticmethod
+   def fashion_ContentObjectTopicData(topic_type='',
+                                      url='',
+                                      start_date=None,
+                                      end_date=None,
+                                      is_hidden=False,
+                                      is_locked=False,
+                                      title='',
+                                      short_title=''):
+       cotd = {'TopicType': topic_type,
+               'Url': url,
+               'StartDate': start_date,
+               'EndDate': end_date,
+               'IsHidden': is_hidden,
+               'IsLocked': is_locked,
+               'Title': title,
+               'ShortTitle': short_title,
+               'Type': 1 }
+       return ContentObjectTopicData(cotd)
+
+   TopicType = property(_get_number_prop('TopicType'),_set_number_prop('TopicType'))
+   Url = property(_get_string_prop('Url'),_set_string_prop('Url'))
+   StartDate = property(_get_string_prop('StartDte'),_set_string_prop('StartDate'))
+   EndDate = property(_get_string_prop('EndDate'),_set_string_prop('EndDate'))
+   IsHidden = property(_get_boolean_prop('IsHidden'),_set_boolean_prop('IsHidden'))
+   IsLocked = property(_get_boolean_prop('IsLocked'),_set_boolean_prop('IsLocked'))
+   Title = property(_get_string_prop('Title'),_set_string_prop('Title'))
+   ShortTitle = property(_get_string_prop('ShortTitle'),_set_string_prop('ShortTitle'))
+   Type = property(_get_number_prop('Type'),_set_number_prop('Type'))
 
 
 ## Learning repository concrete classes
 class LRWSBaseResult(D2LStructure):
-    def __init__(self,json_dict):
-        D2LStructure.__init__(self,json_dict)
+   def __init__(self,json_dict):
+       D2LStructure.__init__(self,json_dict)
 
-    ExecutionMessage = property(_get_string_prop('ExecutionMessage'))
-    ExecutionStatus = property(_get_number_prop('ExecutionStatus'))
+   ExecutionMessage = property(_get_string_prop('ExecutionMessage'))
+   ExecutionStatus = property(_get_number_prop('ExecutionStatus'))
 
 class LRWSObjectProperties(D2LStructure):
-    def __init__(self,json_dict):
-        D2LStructure.__init__(self,json_dict)
+   def __init__(self,json_dict):
+       D2LStructure.__init__(self,json_dict)
 
-    Description = property(_get_string_prop('Description'))
-    ExecutionMessage = property(_get_string_prop('ExecutionMessage'))
-    ExecutionStatus = property(_get_number_prop('ExecutionStatus'))
-    HiddenFromSearchResults = property(_get_boolean_prop('HiddenFromSearchResults'))
-    IdentId = property(_get_number_prop('IdentId'))
-    OwnerId = property(_get_number_prop('OwnerId'))
-    PublicallyAvailable = property(_get_boolean_prop('PublicallyAvailable'))
-    RepositoryId = property(_get_number_prop('RepositoryId'))
-    Status = property(_get_number_prop('Status'))
-    Title = property(_get_string_prop('Title'))
-    Type = property(_get_number_prop('Type'))
-    URL = property(_get_string_prop('URL'))
-    Version = property(_get_number_prop('Version'))
+   Description = property(_get_string_prop('Description'))
+   ExecutionMessage = property(_get_string_prop('ExecutionMessage'))
+   ExecutionStatus = property(_get_number_prop('ExecutionStatus'))
+   HiddenFromSearchResults = property(_get_boolean_prop('HiddenFromSearchResults'))
+   IdentId = property(_get_number_prop('IdentId'))
+   OwnerId = property(_get_number_prop('OwnerId'))
+   PublicallyAvailable = property(_get_boolean_prop('PublicallyAvailable'))
+   RepositoryId = property(_get_number_prop('RepositoryId'))
+   Status = property(_get_number_prop('Status'))
+   Title = property(_get_string_prop('Title'))
+   Type = property(_get_number_prop('Type'))
+   URL = property(_get_string_prop('URL'))
+   Version = property(_get_number_prop('Version'))
 
-    @property
-    def Keywords(self):
-        return self.props['Keywords']
+   @property
+   def Keywords(self):
+       return self.props['Keywords']
 
 class LRWSObjectPropertiesInput(D2LStructure):
-    def __init__(self,json_dict):
-        D2LStructure.__init__(self,json_dict)
+   def __init__(self,json_dict):
+       D2LStructure.__init__(self,json_dict)
 
-    Description = property(_get_string_prop('Description'),_set_string_prop('Description'))
-    HiddenFromSearchResults = property(_get_boolean_prop('HiddenFromSearchResults'),_set_boolean_prop('HiddenFromSearchResults'))
-    OwnerId = property(_get_number_prop('OwnerId'),_set_number_prop('OwnerId'))
-    PublicallyAvailable = property(_get_boolean_prop('PublicallyAvailable'),_set_boolean_prop('PublicallyAvailable'))
-    RepositoryId = property(_get_number_prop('RepositoryId'),_set_number_prop('RepositoryId'))
-    Status = property(_get_number_prop('Status'),_set_number_prop('Status'))
-    Title = property(_get_string_prop('Title'),_set_string_prop('Title'))
+   Description = property(_get_string_prop('Description'),_set_string_prop('Description'))
+   HiddenFromSearchResults = property(_get_boolean_prop('HiddenFromSearchResults'),_set_boolean_prop('HiddenFromSearchResults'))
+   OwnerId = property(_get_number_prop('OwnerId'),_set_number_prop('OwnerId'))
+   PublicallyAvailable = property(_get_boolean_prop('PublicallyAvailable'),_set_boolean_prop('PublicallyAvailable'))
+   RepositoryId = property(_get_number_prop('RepositoryId'),_set_number_prop('RepositoryId'))
+   Status = property(_get_number_prop('Status'),_set_number_prop('Status'))
+   Title = property(_get_string_prop('Title'),_set_string_prop('Title'))
 
-    @property
-    def Keywords(self):
-        return self.props['Keywords']
+   @property
+   def Keywords(self):
+       return self.props['Keywords']
 
-    @Keywords.setter
-    def Keywords(self, new_keywords_list):
-        self.props['Keywords'] = new_keywords_list
+   @Keywords.setter
+   def Keywords(self, new_keywords_list):
+       self.props['Keywords'] = new_keywords_list
 
 
 class LRWSObjectLink(D2LStructure):
-    def __init__(self,json_dict):
-        D2LStructure.__init__(self,json_dict)
+   def __init__(self,json_dict):
+       D2LStructure.__init__(self,json_dict)
 
-    ExecutionMessage = property(_get_string_prop('ExecutionMessage'))
-    ExecutionStatus = property(_get_string_prop('ExecutionStatus'))
-    URL = property(_get_string_prop('URL'))
+   ExecutionMessage = property(_get_string_prop('ExecutionMessage'))
+   ExecutionStatus = property(_get_string_prop('ExecutionStatus'))
+   URL = property(_get_string_prop('URL'))
 
 class LRWSPublishResult(D2LStructure):
-    def __init__(self,json_dict):
-        D2LStructure.__init__(self,json_dict)
+   def __init__(self,json_dict):
+       D2LStructure.__init__(self,json_dict)
 
-    ExecutionMessage = property(_get_string_prop('ExecutionMessage'))
-    ExecutionStatus = property(_get_string_prop('ExecutionStatus'))
-    IdentId = property(_get_number_prop('IdentId'))
-    Version = property(_get_number_prop('Version'))
+   ExecutionMessage = property(_get_string_prop('ExecutionMessage'))
+   ExecutionStatus = property(_get_string_prop('ExecutionStatus'))
+   IdentId = property(_get_number_prop('IdentId'))
+   Version = property(_get_number_prop('Version'))
 
 class LRWSPublishStatusResult(D2LStructure):
-    def __init__(self,json_dict):
-        D2LStructure.__init__(self,json_dict)
+   def __init__(self,json_dict):
+       D2LStructure.__init__(self,json_dict)
 
-    PublishStatus = property(_get_number_prop('PublishStatus'))
-    ErrorMessage = property(_get_string_prop('ErrorMessage'))
-    LoUrl = property(_get_string_prop('LoUrl'))
+   PublishStatus = property(_get_number_prop('PublishStatus'))
+   ErrorMessage = property(_get_string_prop('ErrorMessage'))
+   LoUrl = property(_get_string_prop('LoUrl'))
 
 class LRWSSearchResult(D2LStructure):
-    def __init__(self,json_dict):
-        D2LStructure.__init__(self,json_dict)
+   def __init__(self,json_dict):
+       D2LStructure.__init__(self,json_dict)
 
-    IdentId = property(_get_number_prop('IdentId'))
-    RepositoryId = property(_get_number_prop('RepositoryId'))
-    Version = property(_get_number_prop('Version'))
+   IdentId = property(_get_number_prop('IdentId'))
+   RepositoryId = property(_get_number_prop('RepositoryId'))
+   Version = property(_get_number_prop('Version'))
 
 class LRWSSearchResultCollection(D2LStructure):
-    def __init__(self,json_dict):
-        D2LStructure.__init__(self,json_dict)
+   def __init__(self,json_dict):
+       D2LStructure.__init__(self,json_dict)
 
-    ExecutionMessage = property(_get_string_prop('ExecutionMessage'))
-    ExecutionStatus = property(_get_string_prop('ExecutionStatus'))
-    TotalResults = property(_get_number_prop('TotalResults'))
+   ExecutionMessage = property(_get_string_prop('ExecutionMessage'))
+   ExecutionStatus = property(_get_string_prop('ExecutionStatus'))
+   TotalResults = property(_get_number_prop('TotalResults'))
 
-    @property
-    def Results(self):
-        return self.props['Results']
+   @property
+   def Results(self):
+       return self.props['Results']
 
-    def find_result_by_object_id(self,object_id):
-        result = []
-        for i in range(len(self.props['Results'])):
-            if object_id in self.props['Results'][i]['IdentId']:
-                result.append(LRWSSearchResult(self.props['Results'][i]))
+   def find_result_by_object_id(self,object_id):
+       result = []
+       for i in range(len(self.props['Results'])):
+           if object_id in self.props['Results'][i]['IdentId']:
+               result.append(LRWSSearchResult(self.props['Results'][i]))
 
-        return result
+       return result

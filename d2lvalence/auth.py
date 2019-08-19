@@ -119,6 +119,7 @@ class D2LAppContext(object):
 
     # Constants for use by inheriting D2LAppContext classes, used to help keep
     # track of the query parameter names used in Valence API URLs
+    SCHEME_U = 'HTTP'
     SCHEME_S = 'HTTPS'
     APP_ID = 'x_a'
     APP_SIG = 'x_b'
@@ -157,7 +158,8 @@ class D2LAppContext(object):
     def __repr__(self):
         return repr({'app_id': self.app_id, 'app_key': self.app_key, 'signer': repr(self.signer)})
 
-    def create_url_for_authentication(self, host, client_app_url, connect_type=None):
+    def create_url_for_authentication(self, host, client_app_url,
+                                      connect_type=None, encrypt_request=True):
         """Build a URL that the user's browser can employ to complete the user
         authentication process with the back-end LMS.
 
@@ -171,6 +173,9 @@ class D2LAppContext(object):
         :param connect_type:
             Provide a type string value of `mobile` to signal to the back-end
             service that the user-context will connect from a mobile device.
+        :param encrypt_request:
+            If true (default), generate an URL using a secure scheme (HTTPS);
+            otherwise, generate an URL for an unsecure scheme (HTTP).
         """
         sig = self.signer.get_hash(self.app_key, client_app_url)
 
@@ -185,7 +190,10 @@ class D2LAppContext(object):
 
         # the urlunsplit parts needed to build an URL
         scheme = netloc = path = query = fragment = ''
-        scheme = self.SCHEME_S
+        if encrypt_request:
+            scheme = self.SCHEME_S
+        else:
+            scheme = self.SCHEME_U
         netloc = host
         path = self.AUTH_API
         query = urllib.parse.urlencode(parms_dict,doseq=True)

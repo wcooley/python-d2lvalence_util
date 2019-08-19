@@ -35,7 +35,10 @@ def _fetch_content(request):
     if request.headers['content-type']:
         ct = request.headers['content-type']
     if 'application/json' in ct:
-        return request.json()
+        if requests.__version__[0] is '0':
+            return request.json
+        else:
+            return request.json()
     elif 'text/plain' in ct:
         return request.text
     else:
@@ -78,6 +81,26 @@ def _post_anon(route,uc,params=None,data=None,headers=None,files=None):
     r = requests.post(uc.scheme + '://' + uc.host + route, params=params, data=data, headers=headers, files=files, auth=uc)
     r.raise_for_status()
     return _fetch_content(r)
+
+def _simple_upload(route,uc,f):
+    if not isinstance(f, d2ldata.D2LFile):
+        raise TypeError('File must implement d2lvalence.data.D2LFile')
+
+    boundary = uuid.uuid4().hex
+    f.Stream.seek(0) # check the tape
+    fdata = f.Stream.read()
+    f.Stream.seek(0) # please be kind, rewind
+
+    pdescr = '--{0}\r\nContent-Type: application/json\r\n\r\n{1}\r\n'.format(boundary,json.dumps(f.DescriptorDict)).encode(encoding='utf-8')
+    ptopbound = '--{0}\r\nContent-Disposition: form-data; name=""; filename="{1}"\r\nContent-Type: {2}\r\n\r\n'.format(boundary,f.Name,f.ContentType).encode(encoding='utf-8')
+    pbotbound = '\r\n--{0}--'.format(boundary).encode(encoding='utf-8')
+
+    payload = pdescr + ptopbound + fdata + pbotbound
+
+    headers = {'Content-Type':'multipart/mixed;boundary='+boundary,
+               'Content-Length': str(len(payload))}
+
+    return _post(route,uc,data=payload,headers=headers)
 
 ## API Properties functions
 # Versions
@@ -144,6 +167,10 @@ def create_user(uc,create_user_data,ver='1.0'):
     route = '/d2l/api/lp/{0}/users/'.format(ver)
     return d2ldata.UserData(_post(route,uc,data=create_user_data.as_json()))
 
+def update_user(uc,user_id,update_user_data,ver='1.0'):
+    route = '/d2l/api/lp/{0}/users/{1}'.format(ver,user_id)
+    return d2ldata.UserData(_put(route,uc,data=update_user_data.as_json()))
+
 # Profiles
 def get_profile_by_profile_id(uc,profile_id,ver='1.0'):
     route = '/d2l/api/lp/{0}/profile/{1}'.format(ver,profile_id)
@@ -159,7 +186,20 @@ def get_my_profile(uc,ver='1.0'):
 
 def update_my_profile(uc,updated_profile_data,ver='1.0'):
     route = '/d2l/api/lp/{0}/profile/myProfile'.format(ver)
-    return d2ldata.UserProfile(_put(route,uc,data=updated_profile_data.as_json()))
+    return d2ldata.UserProfile(_put(route,uc,data=updated_profile_data.as_json(),headers={'Content-Type':'application/json'}))
+
+# Passwords
+def delete_password_for_user(uc,user_id,ver='1.0'):
+    route = '/d2l/api/lp/{0}/users/{1}/password'.format(ver,user_id)
+    return _delete(route,uc)
+
+def send_password_reset_email_for_user(uc,user_id,ver='1.0'):
+    route = '/d2l/api/lp/{0}/users/{1}/password'.format(ver,user_id)
+    return _post(route,uc,headers={'Content-Length':'0'})
+
+def update_password_for_user(uc,user_id,new_password,ver='1.0'):
+    route = '/d2l/api/lp/{0}/users/{1}/password'.format(ver,user_id)
+    return _put(route,uc,data=new_password.as_json(),headers={'Content-Type':'application/json'})
 
 # Roles
 def get_all_roles(uc,ver='1.0'):
@@ -178,6 +218,45 @@ def get_role(uc,role_id,ver='1.0'):
     return d2ldata.Role(_get(route,uc))
 
 ## Org structure
+def get_organization_info(uc,ver='1.0'):
+    route = '/d2l/api/lp/{0}/organization/info'.format(ver)
+    return _get(route,uc)
+    #    return d2ldata.Organization(_get(route,uc))
+
+def get_orgunit_children(uc,org_unit_id,org_unit_type_id=None,ver='1.0'):
+    route = '/d2l/api/lp/{0}/orgstructure/{1}/children/'.format(ver,org_unit_id)
+    params = None
+    if org_unit_type_id:
+       params={'ouTypeId':org_unit_type_id}
+    r = _get(route,uc,params=params)
+    result = []
+    for i in range(len(r)):
+        result.append(d2ldata.OrgUnit(r[i]))
+    return result
+
+def get_orgunit_descendants(uc,org_unit_id,org_unit_type_id=None,ver='1.0'):
+    route = '/d2l/api/lp/{0}/orgstructure/{1}/descendants/'.format(ver,org_unit_id)
+    params = None
+    if org_unit_type_id:
+        params={'ouTypeId':org_unit_type_id}
+    r = _get(route,uc,params=params)
+    result = []
+    for i in range(len(r)):
+        result.append(d2ldata.OrgUnit(r[i]))
+    return result
+
+def get_orgunit_parents(uc,org_unit_id,org_unit_type_id=None,ver='1.0'):
+    route = '/d2l/api/lp/{0}/orgstructure/{1}/parents/'.format(ver,org_unit_id)
+    params = None
+    if org_unit_type_id:
+        params={'ouTypeId':org_unit_type_id}
+    r = _get(route,uc,params=params)
+    result = []
+    for i in range(len(r)):
+        result.append(d2ldata.OrgUnit(r[i]))
+    return result
+
+# Org unit types
 def get_all_outypes(uc,ver='1.0'):
     route = '/d2l/api/lp/{0}/outypes/'.format(ver)
     r = _get(route,uc)
@@ -227,6 +306,9 @@ def get_enrolled_users_for_orgunit(uc,org_unit_id,role_id=None,bookmark=None,ver
 
     return d2ldata.PagedResultSet(r)
 
+def get_enrolled_user_in_orgunit(uc,org_unit_id,user_id,ver='1.0'):
+    route = '/d2l/api/lp/{0}/enrollments/orgUnits/{1}/users/{2}'.format(ver,org_unit_id,user_id)
+    return d2ldata.EnrollmentData(_get(route,uc))
 
 ## Course offerings
 def delete_course_offering(uc,org_unit_id,ver='1.0'):
@@ -382,28 +464,35 @@ def get_all_my_grade_values_for_org(uc,org_unit_id,ver='1.0'):
             result.append( d2ldata.GradeObject(r[i]))
     return result
 
+def update_grade_value_for_user_in_org(uc,org_unit_id,grade_object_id,user_id,updated_grade_value,ver='1.0'):
+    if not isinstance(updated_grade_value, d2ldata.IncomingGradeValue):
+        raise TypeError('New grade value must implement d2lvalence.data.IncomingGradeValue')
+    route = '/d2l/api/le/{0}/{1}/grades/{2}/values/{3}'.format(ver,org_unit_id,grade_object_id,user_id)
+    return _put(route,uc,data=updated_grade_value.as_json(),headers={'Content-Type':'application/json'})
+
+
+## Dropbox
+def get_all_dropbox_folders_for_orgunit(uc,org_unit_id,ver='1.0'):
+    route = '/d2l/api/le/{0}/{1}/dropbox/folders/'.format(ver,org_unit_id)
+    return _get(route,uc)
+
+def get_dropbox_folder_for_orgunit(uc,org_unit_id,folder_id,ver='1.0'):
+    route = '/d2l/api/le/{0}/{1}/dropbox/folders/{2}'.format(ver,org_unit_id,folder_id)
+    return _get(route,uc)
+
+def create_my_submission_for_dropbox(uc,org_unit_id,folder_id,d2l_file,ver='1.0'):
+    route = '/d2l/api/le/{0}/{1}/dropbox/folders/{2}/submissions/mysubmissions/'.format(ver,org_unit_id,folder_id)
+    return _simple_upload(route,uc,d2l_file)
+
+def create_submission_for_group_dropbox_folder(uc,org_unit_id,folder_id,group_id,d2l_file,ver='1.0'):
+    route = '/d2l/api/le/{0}/{1}/dropbox/folders/{2}/submissions/group/{3}'.format(ver,org_unit_id,folder_id,group_id)
+    return _simple_upload(route,uc,d2l_file)
+
+def get_submissions_for_dropbox_folder(uc,org_unit_id,folder_id,ver='1.0'):
+    route = '/d2l/api/le/{0}/{1}/dropbox/folders/{2}/submissions/'.format(ver,org_unit_id,folder_id)
+    return _get(route,uc)
 
 ## Lockers
-def _simple_upload(route,uc,f):
-    if not isinstance(f, d2ldata.D2LFile):
-        raise TypeError('File must implement d2lvalence.data.D2LFile')
-
-    boundary = uuid.uuid4().hex
-    f.Stream.seek(0) # check the tape
-    fdata = f.Stream.read()
-    f.Stream.seek(0) # please be kind, rewind
-
-    pdescr = '--{0}\r\nContent-Type: application/json\r\n\r\n{1}\r\n'.format(boundary,json.dumps(f.DescriptorDict)).encode(encoding='utf-8')
-    ptopbound = '--{0}\r\nContent-Disposition: form-data; name=""; filename="{1}"\r\nContent-Type: {2}\r\n\r\n'.format(boundary,f.Name,f.ContentType).encode(encoding='utf-8')
-    pbotbound = '\r\n--{0}--'.format(boundary).encode(encoding='utf-8')
-
-    payload = pdescr + ptopbound + fdata + pbotbound
-
-    headers = {'Content-Type':'multipart/mixed;boundary='+boundary,
-               'Content-Length': str(len(payload))}
-
-    return _post(route,uc,data=payload,headers=headers)
-
 def _get_locker_item(uc,route):
     result = None
     r = _get(route,uc)
@@ -671,7 +760,32 @@ def set_discussion_post_read_status(uc,org_unit_id,forum_id,topic_id,post_id,rea
     return d2ldata.ReadStatusData(r)
 
 
-## Conntent routes
+## News routes
+def get_news_for_orgunit(uc,org_unit_id,since=None,ver='1.0'):
+    route = '/d2l/api/le/{0}/{1}/news/'.format(ver,org_unit_id)
+    result = None
+    if not (since):
+        r = _get(route,uc)
+        result = r
+    elif since:
+        r = _get(route,uc,params={'since':since})
+        result = _get(route,uc)
+    return result
+
+def get_news_item_for_orgunit(uc,org_unit_id,news_item_id,ver='1.0'):
+    route = '/d2l/api/le/{0}/{1}/news/{2}'.format(ver,org_unit_id,news_item_id)
+    return d2ldata.NewsItem(_get(route,uc))
+
+def dismiss_news_item_for_orgunit(uc,org_unit_id,news_item_id,ver='1.0'):
+    route = '/d2l/api/le/{0}/{1}/news/{2}/dismiss'.format(ver,org_unit_id,news_item_id)
+    return _post(route,uc,headers={'Content-Length':'0'})
+
+def restore_news_item_for_orgunit(uc,org_unit_id,news_item_id,ver='1.0'):
+    route = '/d2l/api/le/{0}/{1}/news/{2}/restore'.format(ver,org_unit_id,news_item_id)
+    return _post(route,uc,headers={'Content-Length':'0'})
+
+
+## Content routes
 def delete_content_module(uc,org_unit_id,module_id,ver='1.0'):
     route = '/d2l/api/le/{0}/{1}/content/modules/{2}'.format(ver,org_unit_id,module_id)
     return _delete(route,uc)
