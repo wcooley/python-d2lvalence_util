@@ -26,7 +26,7 @@ of the client library SDK on our repository download page.
 **Dependencies**. In order to use the Python client library SDK, you'll need to
 first ensure you have a working Python development environment:
 
-* Python 3 (the reference environment uses Python 3.2).
+* Python 3 (the reference environment uses Python 3.3).
 
 * The `Requests Python package <http://docs.python-requests.org/en/latest/index.html>`_
   gets used in our :py:mod:`service <d2lvalence.service>` module to make the

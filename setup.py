@@ -24,7 +24,7 @@ if sys.argv[-1] == 'publish':
 packages = ['d2lvalence', ]
 
 # We depend on Kenneth Reitz' requests package to handle the actual HTTP traffic
-requires = ['requests >= 1.0.0', ]
+requires = ['requests >= 1.2.0', ]
 
 setup(
     name='D2LValence',
@@ -39,7 +39,7 @@ setup(
     package_data={'': ['LICENSE', ] },
     include_package_data=True,
     install_requires=[
-        'requests >= 1.0.0',
+        'requests >= 1.2.0',
         ],
     license=open('LICENSE').read(),
     classifiers=(

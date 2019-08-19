@@ -223,6 +223,14 @@ class D2LLORPackage(D2LFile):
         D2LFile.__init__(self,props_dict)
         self.props['DescriptorDict']={}
 
+class D2LNewsAttachment(D2LFile):
+    """D2LFile inheritor for providing attachments to news event posts.
+    """
+
+    def __init__(self,props_dict):
+        D2LFile.__init__(self,props_dict)
+        self.props['DescriptorDict']=None
+
 ## API Properties concrete classes
 class BulkSupportedVersionResponse(D2LStructure):
     def __init__(self,json_dict):
@@ -362,7 +370,7 @@ class UpdateUserData(D2LStructure):
            self.props['ExternalEmail'] = None
        else:
            self.props['ExternalEmail'] = new_email
-   
+
    @property
    def Activation(self):
        return self.props['Activation']
@@ -522,7 +530,7 @@ class UserPasswordData(D2LStructure):
    def __init__(self,json_dict):
        D2LStructure.__init__(self,json_dict)
 
-   Password = property(_get_string_prop('Password'))
+   Password = property(_get_string_prop('Password'),_set_string_prop('Password'))
 
 class Role(D2LStructure):
    def __init__(self,json_dict):
@@ -746,6 +754,23 @@ class EnrollmentData(D2LStructure):
    RoleId = property(_get_number_prop('RoleId'))
    IsCascading = property(_get_boolean_prop('IsCascading'))
 
+class CreateEnrollmentData(D2LStructure):
+    def __init__(self,json_dict):
+        D2LStructure.__init__(self,json_dict)
+
+    @staticmethod
+    def fashion_CreateEnrollmentData(org_unit_id='',
+                                     user_id='',
+                                     role_id=''):
+        ced = {'OrgUnitId': org_unit_id,
+               'UserId': user_id,
+               'RoleId': role_id }
+        return CreateEnrollmentData(ced)
+
+    OrgUnitId = property(_get_number_prop('OrgUnitId'), _set_number_prop('OrgUnitId'))
+    UserId = property(_get_number_prop('UserId'), _set_number_prop('UserId'))
+    RoleId = property(_get_number_prop('RoleId'), _set_number_prop('RoleId'))
+
 class MyOrgUnitInfo(D2LStructure):
    def __init__(self,json_dict):
        D2LStructure.__init__(self,json_dict)
@@ -789,69 +814,262 @@ class OrgUnitInfo(D2LStructure):
        # return OrgUnitTypeInfo(self.props['Type'])
        return self.props['Type']
 
+## Group and Group Category classes
+class GroupCategoryDataFetch(D2LStructure):
+    def __init__(self,json_dict):
+        D2LStructure.__init__(self,json_dict)
+
+    GroupCategoryId = property(_get_number_prop('GroupCategoryId'))
+    Name = property(_get_string_prop('Name'))
+    EnrollmentStyle = property(_get_string_prop('EnrollmentStyle'))
+    EnrollmentQuantity = property(_get_number_prop('EnrollmentQuantity'))
+    AutoEnroll = property(_get_boolean_prop('AutoEnroll'))
+    RandomizeEnrollments = property(_get_boolean_prop('RandomizeEnrollments'))
+    MaxUsersPerGroup = property(_get_number_prop('MaxUsersPerGroup'))
+
+    @property
+    def Description(self):
+        return self.props['Description']
+
+    @property
+    def Groups(self):
+        return self.props['Groups']
+
 ## Grades concrete classes
 class GradeObject(D2LStructure):
-   def __init__(self,json_dict):
-       D2LStructure.__init__(self,json_dict)
+    def __init__(self,json_dict):
+        D2LStructure.__init__(self,json_dict)
 
-   # These two props should be read-only on every instance
-   Id = property(_get_number_prop('Id'))
-   GradeType = property(_get_string_prop('GradeType'))
+    Id = property(_get_number_prop('Id'))
+    GradeType = property(_get_string_prop('GradeType'))
+    Name = property(_get_string_prop('Name'))
+    ShortName = property(_get_string_prop('ShortName'))
+    CategoryId = property(_get_number_prop('Category'))
 
-   Name = property(_get_string_prop('Name'), _set_string_prop('Name'))
-   ShortName = property(_get_string_prop('ShortName'), _set_string_prop('ShortName'))
-   CategoryId = property(_get_number_prop('Category'), _set_string_prop('CategoryId'))
+    @property
+    def Description(self):
+        return self.props['Description']
 
-   @property
-   def Description(self):
-       return self.props['Description']
+class GradeObjectCreateData(D2LStructure):
+    def __init__(self,json_dict):
+        D2LStructure.__init__(self,json_dict)
 
-   def update_description(self, descr, is_html=False):
-       t = 'Text'
-       if is_html:
-           t = 'HTML'
-       self.props['Description'] = {'Content': descr, 'Type': t }
+    @staticmethod
+    def fashion_GradeObjectCreateData(name='',
+                                      short_name='',
+                                      category_id=None,
+                                      description='',
+                                      description_is_html=False,
+                                      grade_type=''):
+        gocd = {'Name': name,
+                'ShortName': short_name,
+                'CategoryId': category_id,
+                'Description': {'Content': description, 'Type':''},
+                'GradeType': grade_type
+            }
+        if description_is_html:
+            gocd['Description']['Type']='HTML'
+        else:
+            gocd['Description']['Type']='Text'
+
+        return GradeObjectCreateData(gocd)
+
+    GradeType = property(_get_string_prop('GradeType'),_set_string_prop('GradeType'))
+    Name = property(_get_string_prop('Name'),_set_string_prop('Name'))
+    ShortName = property(_get_string_prop('ShortName'),_set_string_prop('ShortName'))
+    CategoryId = property(_get_number_prop('Category'),_set_number_prop('CategoryId'))
+
+    @property
+    def Description(self):
+        return self.props['Description']
+
+    @Description.setter
+    def Description(self,new_description='',description_is_html=False):
+        self.props['Description']['Content'] = new_description
+        if description_is_html:
+            self.props['Description']['Type']='HTML'
+        else:
+            self.props['Description']['Type']='Text'
 
 class GradeObjectNumeric(GradeObject):
-   def __init__(self,json_dict):
-       GradeObject.__init__(self,json_dict)
-       self.props['GradeType'] = 'Numeric'
+    def __init__(self,json_dict):
+        GradeObject.__init__(self,json_dict)
+        self.props['GradeType'] = 'Numeric'
 
-   MaxPoints = property(_get_number_prop('MaxPoints'), _set_number_prop('MaxPoints'))
-   CanExceedMaxPoints = property(_get_boolean_prop('CanExceedMaxPoints'),
-                                 _set_boolean_prop('CanExceedMaxPoints'))
-   IsBonus = property(_get_boolean_prop('IsBonus'), _set_boolean_prop('IsBonus'))
-   ExcludeFromFinalGradeCalculation = property(_get_boolean_prop('ExcludeFromFinalGradeCalculation'),
-                                               _set_boolean_prop('ExcludeFromFinalGradeCalculation'))
-   GradeSchemeId = property(_get_number_prop('GradeSchemeId'), _set_number_prop('GradeSchemeId'))
+    MaxPoints = property(_get_number_prop('MaxPoints'))
+    CanExceedMaxPoints = property(_get_boolean_prop('CanExceedMaxPoints'))
+    IsBonus = property(_get_boolean_prop('IsBonus'))
+    ExcludeFromFinalGradeCalculation = property(_get_boolean_prop('ExcludeFromFinalGradeCalculation'))
+    GradeSchemeId = property(_get_number_prop('GradeSchemeId'))
+
+class GradeObjectNumericCreateData(GradeObjectCreateData):
+    def __init__(self,json_dict):
+        GradeObjectCreateData.__init__(self,json_dict)
+        self.props['GradeType'] = 'Numeric'
+
+    @staticmethod
+    def fashion_GradeObjectNumericCreateData(name='',
+                                             short_name='',
+                                             category_id=None,
+                                             description='',
+                                             description_is_html=False,
+                                             max_points=None,
+                                             can_exceed_max_points=False,
+                                             is_bonus=False,
+                                             exclude_from_final_grade_calculation=False,
+                                             grade_scheme_id=None):
+        goncd = {'Name': name,
+                'ShortName': short_name,
+                'CategoryId': category_id,
+                'Description': {'Content': description, 'Type': ''},
+                'GradeType': 'Numeric',
+                'MaxPoints': max_points,
+                'CanExceedMaxPoints': can_exceed_max_points,
+                'IsBonus': is_bonus,
+                'ExcludeFromFinalGradeCalculation': exclude_from_final_grade_calculation,
+                'GradeSchemeId': grade_scheme_id}
+        if description_is_html:
+            goncd['Description']['Type']='HTML'
+        else:
+            goncd['Description']['Type']='Text'
+
+        return GradeObjectNumericCreateData(goncd)
+
+    MaxPoints = property(_get_number_prop('MaxPoints'), _set_number_prop('MaxPoints'))
+    CanExceedMaxPoints = property(_get_boolean_prop('CanExceedMaxPoints'),
+                                  _set_boolean_prop('CanExceedMaxPoints'))
+    IsBonus = property(_get_boolean_prop('IsBonus'), _set_boolean_prop('IsBonus'))
+    ExcludeFromFinalGradeCalculation = property(_get_boolean_prop('ExcludeFromFinalGradeCalculation'),
+                                                _set_boolean_prop('ExcludeFromFinalGradeCalculation'))
+    GradeSchemeId = property(_get_number_prop('GradeSchemeId'), _set_number_prop('GradeSchemeId'))
+
 
 class GradeObjectPassFail(GradeObject):
-   def __init__(self,json_dict):
-       GradeObject.__init__(self,json_dict)
-       self.props['GradeType'] = 'PassFail'
+    def __init__(self,json_dict):
+        GradeObject.__init__(self,json_dict)
+        self.props['GradeType'] = 'PassFail'
 
-   MaxPoints = property(_get_number_prop('MaxPoints'), _set_number_prop('MaxPoints'))
-   IsBonus = property(_get_boolean_prop('IsBonus'), _set_boolean_prop('IsBonus'))
-   ExcludeFromFinalGradeCalculation = property(_get_boolean_prop('ExcludeFromFinalGradeCalculation'),
-                                               _set_boolean_prop('ExcludeFromFinalGradeCalculation'))
-   GradeSchemeId = property(_get_number_prop('GradeSchemeId'), _set_number_prop('GradeSchemeId'))
+    MaxPoints = property(_get_number_prop('MaxPoints'))
+    IsBonus = property(_get_boolean_prop('IsBonus'))
+    ExcludeFromFinalGradeCalculation = property(_get_boolean_prop('ExcludeFromFinalGradeCalculation'))
+    GradeSchemeId = property(_get_number_prop('GradeSchemeId'))
+
+class GradeObjectPassFailCreateData(GradeObjectCreateData):
+    def __init__(self,json_dict):
+        GradeObjectCreateData.__init__(self,json_dict)
+        self.props['GradeType'] = 'PassFail'
+
+    @staticmethod
+    def fashion_GradeObjectPassFailCreateData(name='',
+                                              short_name='',
+                                              category_id=None,
+                                              description='',
+                                              description_is_html=False,
+                                              max_points=None,
+                                              is_bonus=False,
+                                              exclude_from_final_grade_calculation=False,
+                                              grade_scheme_id=None):
+        gopfcd = {'Name': name,
+                  'ShortName': short_name,
+                  'CategoryId': category_id,
+                  'Description': {'Content': description, 'Type': ''},
+                  'GradeType': 'PassFail',
+                  'MaxPoints': max_points,
+                  'IsBonus': is_bonus,
+                  'ExcludeFromFinalGradeCalculation': exclude_from_final_grade_calculation,
+                  'GradeSchemeId': grade_scheme_id}
+        if description_is_html:
+            gopfcd['Description']['Type']='HTML'
+        else:
+            gopfcd['Description']['Type']='Text'
+
+        return GradeObjectPassFailCreateData(gopfcd)
+
+    MaxPoints = property(_get_number_prop('MaxPoints'), _set_number_prop('MaxPoints'))
+    IsBonus = property(_get_boolean_prop('IsBonus'), _set_boolean_prop('IsBonus'))
+    ExcludeFromFinalGradeCalculation = property(_get_boolean_prop('ExcludeFromFinalGradeCalculation'),
+                                                _set_boolean_prop('ExcludeFromFinalGradeCalculation'))
+    GradeSchemeId = property(_get_number_prop('GradeSchemeId'), _set_number_prop('GradeSchemeId'))
+
 
 class GradeObjectSelectBox(GradeObject):
-   def __init__(self,json_dict):
-       GradeObject.__init__(self,json_dict)
-       self.props['GradeType'] = 'SelectBox'
+    def __init__(self,json_dict):
+        GradeObject.__init__(self,json_dict)
+        self.props['GradeType'] = 'SelectBox'
 
-   MaxPoints = property(_get_number_prop('MaxPoints'), _set_number_prop('MaxPoints'))
-   IsBonus = property(_get_boolean_prop('IsBonus'), _set_boolean_prop('IsBonus'))
-   ExcludeFromFinalGradeCalculation = property(_get_boolean_prop('ExcludeFromFinalGradeCalculation'),
-                                               _set_boolean_prop('ExcludeFromFinalGradeCalculation'))
-   GradeSchemeId = property(_get_number_prop('GradeSchemeId'), _set_number_prop('GradeSchemeId'))
+    MaxPoints = property(_get_number_prop('MaxPoints'))
+    IsBonus = property(_get_boolean_prop('IsBonus'))
+    ExcludeFromFinalGradeCalculation = property(_get_boolean_prop('ExcludeFromFinalGradeCalculation'))
+    GradeSchemeId = property(_get_number_prop('GradeSchemeId'))
+
+class GradeObjectSelectBoxCreateData(GradeObjectCreateData):
+    def __init__(self,json_dict):
+        GradeObjectCreateData.__init__(self,json_dict)
+        self.props['GradeType'] = 'SelectBox'
+
+    @staticmethod
+    def fashion_GradeObjectSelectBoxCreateData(name='',
+                                               short_name='',
+                                               category_id=None,
+                                               description='',
+                                               description_is_html=False,
+                                               max_points=None,
+                                               is_bonus=False,
+                                               exclude_from_final_grade_calculation=False,
+                                               grade_scheme_id=None):
+        gosbcd = {'Name': name,
+                  'ShortName': short_name,
+                  'CategoryId': category_id,
+                  'Description': {'Content': description, 'Type': ''},
+                  'GradeType': 'SelectBox',
+                  'MaxPoints': max_points,
+                  'IsBonus': is_bonus,
+                  'ExcludeFromFinalGradeCalculation': exclude_from_final_grade_calculation,
+                  'GradeSchemeId': grade_scheme_id}
+        if description_is_html:
+            gosbcd['Description']['Type']='HTML'
+        else:
+            gosbcd['Description']['Type']='Text'
+
+        return GradeObjectSelectBoxCreateData(gosbcd)
+
+    MaxPoints = property(_get_number_prop('MaxPoints'), _set_number_prop('MaxPoints'))
+    IsBonus = property(_get_boolean_prop('IsBonus'), _set_boolean_prop('IsBonus'))
+    ExcludeFromFinalGradeCalculation = property(_get_boolean_prop('ExcludeFromFinalGradeCalculation'),
+                                                _set_boolean_prop('ExcludeFromFinalGradeCalculation'))
+    GradeSchemeId = property(_get_number_prop('GradeSchemeId'), _set_number_prop('GradeSchemeId'))
+
 
 class GradeObjectText(GradeObject):
    def __init__(self,json_dict):
        GradeObject.__init__(self,json_dict)
        self.props['GradeType'] = 'Text'
 
+class GradeObjectTextCreateData(GradeObjectCreateData):
+    def __init__(self,json_dict):
+        GradeObjectCreateData.__init__(self,json_dict)
+        self.props['GradeType'] = 'Text'
+
+    @staticmethod
+    def fashion_GradeObjectTextCreateData(name='',
+                                          short_name='',
+                                          category_id=None,
+                                          description='',
+                                          description_is_html=False):
+        gotcd = {'Name': name,
+                 'ShortName': short_name,
+                 'CategoryId': category_id,
+                 'Description': {'Content': description, 'Type': ''},
+                 'GradeType': 'Text'}
+        if description_is_html:
+            gotcd['Description']['Type']='HTML'
+        else:
+            gotcd['Description']['Type']='Text'
+
+        return GradeObjectTextCreateData(gotcd);
+
+
+# Grade values
 class GradeValue(D2LStructure):
    def __init__(self,json_dict):
        D2LStructure.__init__(self,json_dict)
@@ -871,40 +1089,197 @@ class GradeValueComputable(GradeValue):
    WeightedNumerator = property(_get_number_prop('WeightedNumerator'))
    WeightedDenominator = property(_get_number_prop('WeightedDenominator'))
 
-class IncomingGradeValue(D2LStructure):
-   def __init__(self,json_dict):
-       D2LStructure.__init__(self,json_dict)
+class IncomingFinalAdjustedGradeValue(D2LStructure):
+    def __init__(self,json_dict):
+        D2LStructure.__init__(self,json_dict)
 
-   GradeObjectType = property(_get_number_prop('GradeObjectType'))
+    @staticmethod
+    def fashion_IncomingFinalAdjustedGradeValue(points_numerator=None,
+                                                points_denominator=None):
+        ifagv = {'PointsNumerator': points_numerator,
+                 'PointsDenominator': points_denominator}
+        return IncomingFinalAdjustedGradeValue(ifagv)
+
+    PointsNumerator = property(_get_number_prop('PointsNumerator'),
+                               _set_number_prop('PointsNumerator'))
+    PointsDenominator = property(_get_number_prop('PointsDenominator'),
+                                 _set_number_prop('PointsDenominator'))
+
+class IncomingGradeValue(D2LStructure):
+    def __init__(self,json_dict):
+        D2LStructure.__init__(self,json_dict)
+
+    GradeObjectType = property(_get_number_prop('GradeObjectType'))
 
 class IncomingGradeValueNumeric(IncomingGradeValue):
-   def __init__(self,json_dict):
-       IncomingGradeValue.__init__(self,json_dict)
-       self.props['GradeObjectType'] = 1
+    def __init__(self,json_dict):
+        IncomingGradeValue.__init__(self,json_dict)
+        self.props['GradeObjectType'] = 1
 
-   PointsNumerator = property(_get_number_prop('PointsNumerator'), _set_number_prop('PointsNumerator'))
+    @staticmethod
+    def fashion_IncomingGradeValueNumeric(points_numerator=None):
+        igvn = {'PointsNumerator': points_numerator,
+                'GradeObjectType': 1}
+        return IncomingGradeValueNumeric(igvn)
+
+    PointsNumerator = property(_get_number_prop('PointsNumerator'), _set_number_prop('PointsNumerator'))
 
 class IncomingGradeValuePassFail(IncomingGradeValue):
-   def __init__(self,json_dict):
-       IncomingGradeValue.__init__(self,json_dict)
-       self.props['GradeObjectType'] = 2
+    def __init__(self,json_dict):
+        IncomingGradeValue.__init__(self,json_dict)
+        self.props['GradeObjectType'] = 2
 
-   Pass = property(_get_boolean_prop('Pass'), _set_boolean_prop('Pass'))
+    @staticmethod
+    def fashion_IncomingGradeValuePassFail(is_passing_value=True):
+        igvpf = {'Pass': is_passing_value,
+                'GradeObjectType': 2}
+        return IncomingGradeValuePassFail(igvpf)
+
+    Pass = property(_get_boolean_prop('Pass'), _set_boolean_prop('Pass'))
 
 class IncomingGradeValueSelectBox(IncomingGradeValue):
-   def __init__(self,json_dict):
-       IncomingGradeValue.__init__(self,json_dict)
-       self.props['GradeObjectType'] = 3
+    def __init__(self,json_dict):
+        IncomingGradeValue.__init__(self,json_dict)
+        self.props['GradeObjectType'] = 3
 
-   Value = property(_get_string_prop('Value'), _set_string_prop('Value'))
+    @staticmethod
+    def fashion_IncomingGradeValueSelectBox(value=''):
+        igvsb = {'Value': value,
+                 'GradeObjectType': 3}
+        return IncomingGradeValueSelectBox(igvsb)
+
+    Value = property(_get_string_prop('Value'), _set_string_prop('Value'))
 
 class IncomingGradeValueText(IncomingGradeValue):
-   def __init__(self,json_dict):
-       IncomingGradeValue.__init__(self,json_dict)
-       self.props['GradeObjectType'] = 4
+    def __init__(self,json_dict):
+        IncomingGradeValue.__init__(self,json_dict)
+        self.props['GradeObjectType'] = 4
 
-   Text = property(_get_string_prop('Text'), _set_string_prop('Text'))
+    @staticmethod
+    def fashion_IncomingGradeValueText(text=''):
+        igvt = {'Text': text,
+                'GradeObjectType': 4}
+        return IncomingGradeValueText(igvt)
 
+    Text = property(_get_string_prop('Text'), _set_string_prop('Text'))
+
+class GradeObjectCategory(D2LStructure):
+    def __init__(self,json_dict):
+        D2LStructure.__init__(self,json_dict)
+
+    Id = property(_get_number_prop('Id'))
+    Name = property(_get_string_prop('Name'))
+    ShortName = property(_get_string_prop('ShortName'))
+    CanExceedMax = property(_get_boolean_prop('CanExceedMax'))
+    ExcludeFromFinalGrade = property(_get_boolean_prop('ExcludeFromFinalGrade'))
+    StartDate = property(_get_string_prop('StartDate'))
+    EndDate = property(_get_string_prop('EndDate'))
+    Weight = property(_get_number_prop('Weight'))
+    MaxPoints = property(_get_number_prop('MaxPoints'))
+    AutoPoints = property(_get_boolean_prop('AutoPoints'))
+    WeightDistributionType = property(_get_number_prop('WeightDistributionType'))
+    NumberOfHighestToDrop = property(_get_number_prop('NumberOfHighestToDrop'))
+    NumberOfLowestToDrop = property(_get_number_prop('NumberOfLowestToDrop'))
+
+    @property
+    def Grades(self):
+        return self.props['Grades']
+
+class GradeObjectCategoryData(D2LStructure):
+    def __init__(self,json_dict):
+        D2LStructure.__init__(self,json_dict)
+
+    @staticmethod
+    def fashion_GradeObjectCategoryData(name='',
+                                        short_name='',
+                                        can_exceed_max=False,
+                                        exclude_from_final_grade=False,
+                                        start_date=None,
+                                        end_date=None,
+                                        weight=None,
+                                        max_points=None,
+                                        auto_points=False,
+                                        weight_distribution_type=None,
+                                        number_of_highest_to_drop=None,
+                                        number_of_lowest_to_drop=None ):
+        gocd = {'Name': name,
+                'ShortName': short_name,
+                'CanExceedMax': can_exceed_max, 'ExcludeFromFinalGrade': exclude_from_final_grade,
+                'StartDate': start_date, 'EndDate': end_date,
+                'Weight': weight, 'MaxPoints': max_points,
+                'AutoPoints': auto_points,
+                'WeightDistributionType': weight_distribution_type,
+                'NumberOfHighestToDrop': number_of_highest_to_drop,
+                'NumberOfLowestToDrop': number_of_lowest_to_drop }
+        return GradeObjectCategoryData(gocd)
+
+    Name = property(_get_string_prop('Name'),_set_string_prop('Name'))
+    ShortName = property(_get_string_prop('ShortName'),_set_string_prop('ShortName'))
+    CanExceedMax = property(_get_boolean_prop('CanExceedMax'),_set_boolean_prop('CanExceedMax'))
+    ExcludeFromFinalGrade = property(_get_boolean_prop('ExcludeFromFinalGrade'),_set_boolean_prop('ExcludeFromFinalGrade'))
+    StartDate = property(_get_string_prop('StartDate'),_set_string_prop('StartDate'))
+    EndDate = property(_get_string_prop('EndDate'),_set_string_prop('EndDate'))
+    Weight = property(_get_number_prop('Weight'),_set_number_prop('Weight'))
+    MaxPoints = property(_get_number_prop('MaxPoints'),_set_number_prop('MaxPoints'))
+    AutoPoints = property(_get_boolean_prop('AutoPoints'),_set_boolean_prop('AutoPoints'))
+    WeightDistributionType = property(_get_number_prop('WeightDistributionType'),_set_number_prop('WeightDistributionType'))
+    NumberOfHighestToDrop = property(_get_number_prop('NumberOfHighestToDrop'),_set_number_prop('NumberOfHighestToDrop'))
+    NumberOfLowestToDrop = property(_get_number_prop('NumberOfLowestToDrop'),_set_number_prop('NumberOfLowestToDrop'))
+
+class GradeScheme(D2LStructure):
+    def __init__(self,json_dict):
+        D2LStructure.__init__(self,json_dict)
+
+    Id = property(_get_number_prop('Id'))
+    Name = property(_get_string_prop('Name'))
+    ShortName = property(_get_string_prop('ShortName'))
+
+    @property
+    def Ranges(self):
+        return self.props['Ranges']
+
+## Course completion concrete classes
+class CourseCompletion(D2LStructure):
+    def __init__(self,json_dict):
+        D2LStructure.__init__(self,json_dict)
+
+    OrgUnitId = property(_get_number_prop('OrgUnitId'))
+    CompletionId = property(_get_number_prop('CompletionId'))
+    UserId = property(_get_number_prop('UserId'))
+    CompletedDate = property(_get_string_prop('CompletedDate'))
+    ExpiryDate = property(_get_string_prop('ExpiryDate'))
+
+class CourseCompletionCreateData(D2LStructure):
+    def __init__(self,json_dict):
+        D2LStructure.__init__(self,json_dict)
+
+    @staticmethod
+    def fashion_CourseCompletionCreateData(user_id=None,
+                                             completed_date='',
+                                             expiry_date=''):
+        cccd = {'UserId': user_id,
+                'CompletedDate': completed_date,
+                'ExpiryDate': expiry_date}
+        return CourseCompletionCreateData(cccd)
+
+    UserId = property(_get_number_prop('UserId'), _set_number_prop('UserId'))
+    CompletedDate = property(_get_string_prop('CompletedDate'), _set_string_prop('CompletedDate'))
+    ExpiryDate = property(_get_string_prop('ExpiryDate'), _set_string_prop('ExpiryDate'))
+
+class CourseCompletionUpdateData(D2LStructure):
+    def __init__(self,json_dict):
+        D2LStructure.__init__(self,json_dict)
+
+    @staticmethod
+    def fashion_CourseCompletionUpdateData(completed_date='',
+                                           expiry_date=''):
+        ccud = {'CompletedDate': completed_date,
+                'ExpiryDate': expiry_date}
+        return CourseCompletionUpdateData(ccud)
+
+    CompletedDate = property(_get_string_prop('CompletedDate'), _set_string_prop('CompletedDate'))
+    ExpiryDate = property(_get_string_prop('ExpiryDate'), _set_string_prop('ExpiryDate'))
+    
 ## Locker concrete classes
 class LockerItem(D2LStructure):
    def __init__(self,json_dict):
@@ -1339,6 +1714,49 @@ class NewsItem(D2LStructure):
    @property
    def Body(self):
        return self.props['Body']
+
+
+class NewsItemData(D2LStructure):
+    def __init__(self,json_dict):
+        D2LStructure.__init__(self,json_dict)
+
+    @staticmethod
+    def fashion_NewsItemData(title='', body_text='', html_text=None,
+                             start_date='', end_date=None, is_global=False,
+                             is_published=False, show_only_in_course=False):
+        nid = {'Title': title,
+               'Body': {'Text': body_text, 'HTML': html_text},
+               'StartDate': start_date,
+               'EndDate': end_date,
+               'IsGlobal': is_global,
+               'IsPublished': is_published,
+               'ShowOnlyInCourseOfferings': show_only_in_course}
+        return NewsItemData(nid)
+
+    Title = property(_get_string_prop('Title'),_set_string_prop('Title'))
+    StartDate = property(_get_string_prop('StartDate'),_set_string_prop('StartDate'))
+    EndDate = property(_get_string_prop('EndDate'),_set_string_prop('EndDate'))
+    IsGlobal = property(_get_boolean_prop('IsGlobal'),_set_boolean_prop('IsGlobal'))
+    IsPublished = property(_get_boolean_prop('IsPublished'),_set_boolean_prop('IsPublished'))
+    ShowOnlyInCourseOfferings = property(_get_boolean_prop('ShowOnlyInCourseOfferings'),
+                                         _set_boolean_prop('ShowOnlyInCourseOfferings'))
+
+    @property
+    def Text(self):
+        return self.props['Body']['Text']
+
+    @Text.setter
+    def Text(self,s):
+        self.props['Body']['Text']=s
+
+    @property
+    def HTML(self):
+        return self.props['Body']['HTML']
+
+    @HTML.setter
+    def HTML(self,s):
+        self.props['Body']['HTML']=s
+
 
 ## Content concrete classes
 class ContentObjectModule(D2LStructure):

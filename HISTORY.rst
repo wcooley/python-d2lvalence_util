@@ -3,6 +3,52 @@
 History
 -------
 
+0.1.13 (2013-04-17)
++++++++++++++++++++
+* enhanced `service` functions to allow for passing keyword args down into the
+  requests library making the outgoing HTTP calls
+
+* explicitly added 'application/json' content type header to service actions
+  sending JSON to the service
+
+* modified multipart/mixed upload functions in `service` module to cope with
+  changes in requests v1.2.0 around setting the Content-Type header for the
+  upload action: now the functions use sessions around a prepped-request object,
+  consistent with requests library new pattern for messing with the headers/body
+  of an HTTP request
+
+* added `data.D2LNewsAttachment` child of `data.D2LFile` to handle adding
+  attachments to news events; added `data.NewsItemData` structure to support
+  creation of news events; added new routes to support more news actions
+
+* added `data.CreateEnrollmentData` structure to handle structure sent during
+  enrollment creation; added service routes around user enrollment (delete,
+  create)
+
+* added `data.GroupCategoryDataFetch` and service methods to support some group
+  routes; added routes around group org units
+
+* added `data.GradeObjectCreateData` and re-factored `data.GradeObject`, as well
+  as the derived grade object type classes, to separate structures for fetching
+  and creating grade objects; added `data.GradeObjectCategory` and
+  `data.GradeObjectCategoryData` to support grade object category routes; added
+  service routes around grade objects, grade categories, grade values
+
+
+* added factory methods to the incoming-grade-value structures for easier
+  creation; added `data.IncomingFinalAdjustedGradeValue` structure for updating
+  final adjusted grade value
+
+* added data structures and routes around course completion
+
+* added routes around calendar events
+
+* fixed `service.get_organization_info` to return an Organization JSON
+  structure, and not raw request content.
+
+* fixed `service.get_all_my_grade_values_for_org` to return grade value
+  instances, instead of grade object instances
+
 0.1.12 (2013-01-23)
 +++++++++++++++++++
 * fixed bug in D2LUserContext's implementation as a requests.auth.AuthBase so
