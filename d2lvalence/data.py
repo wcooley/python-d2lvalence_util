@@ -19,9 +19,11 @@
 :module: d2lvalence.data
 :synopsis: Provides definitions and support for handling Valence data structures
 """
+import sys
 import copy
 import io
 import json
+import requests
 
 ## Utility functions
 # these get used by the various data structures to provide for more elegant and compact
@@ -81,6 +83,33 @@ class D2LStructure():
         return copy.deepcopy(self.props)
 
 ## Utility classes
+class D2LDebugInfo(object):
+    """Wraps up a requests.Response object for passing back up through the service
+    layer when an instance is passed down in the 'd2ldebug=' keyword parameter.
+    """
+
+    def __init__(self):
+        self._response = self._request = None
+
+    def add_request(self,r):
+        self._request = r
+
+    def add_response(self, r):
+        self._response = r
+
+    def fetch_request(self):
+        return self._request
+
+    def fetch_response(self):
+        return self._response
+
+    def unlink_request(self):
+        self._request = None
+
+    def unlink_response(self):
+        self._response = None
+
+
 class PagedResultSet(D2LStructure):
     """Structure used to wrap paged result sets sent back from the API.
 
@@ -230,6 +259,15 @@ class D2LNewsAttachment(D2LFile):
     def __init__(self,props_dict):
         D2LFile.__init__(self,props_dict)
         self.props['DescriptorDict']=None
+
+class D2LDiscussionPostAttachment(D2LFile):
+    """D2LFile inheritor for providing attachments to discussion posts.
+    """
+
+    def __init__(self,props_dict):
+        D2LFile.__init__(self,props_dict)
+        self.props['DescriptorDict']=None
+
 
 ## API Properties concrete classes
 class BulkSupportedVersionResponse(D2LStructure):
@@ -532,6 +570,12 @@ class UserPasswordData(D2LStructure):
 
    Password = property(_get_string_prop('Password'),_set_string_prop('Password'))
 
+class UserActivationData(D2LStructure):
+    def __init__(self,json_dict):
+        D2LStructure.__init__(self,json_dict)
+
+    IsActive = property(_get_boolean_prop('IsActive'),_set_boolean_prop('IsActive'))
+
 class Role(D2LStructure):
    def __init__(self,json_dict):
        D2LStructure.__init__(self,json_dict)
@@ -655,6 +699,7 @@ class CreateCourseOffering(D2LStructure):
 
        cco = {'Name': name,
               'Code': code,
+              'Path': path,
               'CourseTemplateId': course_template_id,
               'SemesterId': semester_id,
               'StartDate': start_date,
@@ -1279,7 +1324,7 @@ class CourseCompletionUpdateData(D2LStructure):
 
     CompletedDate = property(_get_string_prop('CompletedDate'), _set_string_prop('CompletedDate'))
     ExpiryDate = property(_get_string_prop('ExpiryDate'), _set_string_prop('ExpiryDate'))
-    
+
 ## Locker concrete classes
 class LockerItem(D2LStructure):
    def __init__(self,json_dict):

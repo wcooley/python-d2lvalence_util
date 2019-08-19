@@ -3,6 +3,51 @@
 History
 -------
 
+0.1.15 (2013-05-22)
++++++++++++++++++++
+* added structures and routes for support user activation
+
+* repair news item attachment upload (in create_news_item_for_orgunit) to avoid
+  tacking on extra CR-LF pairs to file data
+
+* broad change to the way dictionaries of control values get passed down from
+  the `service` into the requests library, for two reasons: to attempt to
+  simplify the code around setting them, and to attempt to better avoid stomping
+  values passed down from higher calling layers
+
+* provide a `data.D2LDebugInfo` to act as a carrier for the actual
+  request/response object used in the bowels of a service function call: passing
+  down a `D2LDebugInfo` in a `d2ldebug` keyword argument captures a ref of the
+  request/response used so that you can inspect it after making the service call
+  (for examining outgoing URL/headers, full response headers/body/reason, etc)
+
+* factor `Response.raise_for_status()` call into the `_fetch_content()` private
+  service method to put it in one place, and to allow us the opportunity to
+  gather the response object into a provided `D2LDebugInfo` before possibly
+  raising the exception for a failed call
+
+* added `with_traceback()` to the various exceptions service libarary raises for
+  more provided trace info on exceptions
+
+* added more type checking around parameters passed into service functions that
+  are expected to be D2LValence data classes
+
+* repaired post to create a discussion post to account for being able to send
+  one or more file attachments along with the new post; added
+  `data.D2LDiscussionPostAttachment` child of `data.D2LFile` to handle
+  discussion post attachments
+
+* repaired `service.check_versions()` to consume an array of
+  SupportedVersionRequest objects
+
+* fixed bug in `data.CreateCourseOffering.fashion_CreateCourseOffering` factory
+  function to set `Path` property for the new instance
+
+* added service function to retrieve a raw news item attachment for a news item
+  in an org unit
+
+* added structures and routes to support ePortfolio package export and import
+
 0.1.14 (2013-04-29)
 +++++++++++++++++++
 * repaired D2LUserContext so that it (a) handles API routes that contain
