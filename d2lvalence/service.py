@@ -19,8 +19,10 @@
 :module: d2lvalence.service
 :synopsis: Provides a suite of convenience functions for making D2L Valence calls.
 """
-import json
-import requests
+import sys       # for exception throwing
+import json      # for packing and unpacking dicts into JSON structures
+import requests  # for making HTTP requests of the back-end service
+import uuid      # for generating unique boundary tags in multi-part POST/PUT requests
 
 import d2lvalence.auth as d2lauth
 import d2lvalence.data as d2ldata
@@ -28,32 +30,39 @@ import d2lvalence.data as d2ldata
 
 # internal utility functions
 
-def _delete(route,uc,params=None):
-    r = requests.delete(uc.scheme + '://' + uc.host + route, params=params, auth=uc)
+def _delete(route,uc,params=None,data=None,headers=None):
+    r = requests.delete(uc.scheme + '://' + uc.host + route, params=params, data=data, headers=headers, auth=uc)
     r.raise_for_status()
     # catch TypeError because the current version of the requests library throws it here
     # when the body is empty --> r.text returns ''
     try:
         return r.json
     except TypeError:
-        return r.text
+        return r.content
 
-def _get(route,uc,params=None):
-    r = requests.get(uc.scheme + '://' + uc.host + route, params=params, auth=uc)
+def _get(route,uc,params=None,data=None,headers=None):
+    r = requests.get(uc.scheme + '://' + uc.host + route, params=params, data=data, headers=headers, auth=uc)
     r.raise_for_status()
-    return r.json
-
-def _post(route,uc,params=None,data=None):
-    r = requests.post(uc.scheme + '://' + uc.host + route, data=data, auth=uc)
-    r.raise_for_status()
-    if r.json:
+    try:
         return r.json
+    except TypeError:
+        return r.content
 
-def _put(route,uc,params=None,data=None):
-    r = requests.put(uc.scheme + '://' + uc.host + route, data=data, auth=uc)
+def _post(route,uc,params=None,data=None,headers=None):
+    r = requests.post(uc.scheme + '://' + uc.host + route, params=params, data=data, headers=headers, auth=uc)
     r.raise_for_status()
-    if r.json:
+    try:
         return r.json
+    except TypeError:
+        return r.content
+
+def _put(route,uc,params=None,data=None,headers=None):
+    r = requests.put(uc.scheme + '://' + uc.host + route, params=params, data=data, headers=headers, auth=uc)
+    r.raise_for_status()
+    try:
+        return r.json
+    except TypeError:
+        return r.content
 
 ## API Properties functions
 # Versions
@@ -123,6 +132,10 @@ def create_user(uc,create_user_data,ver='1.0'):
 # Profiles
 def get_profile_by_profile_id(uc,profile_id,ver='1.0'):
     route = '/d2l/api/lp/{0}/profile/{1}'.format(ver,profile_id)
+    return d2ldata.UserProfile(_get(route,uc))
+
+def get_profile_by_user_id(uc,user_id,ver='1.0'):
+    route = '/d2l/api/lp/{0}/profile/user/{1}'.format(ver,user_id)
     return d2ldata.UserProfile(_get(route,uc))
 
 def get_my_profile(uc,ver='1.0'):
@@ -265,4 +278,125 @@ def get_all_grade_values_for_user_in_org(uc,orgUnitId,userId,ver='1.0'):
             result.append(d2ldata.GradeValue(r[i]))
     return result
 
+
+## Lockers
+def _simple_upload(route,uc,f):
+    if not isinstance(f, d2ldata.D2LFile):
+        raise TypeError('File must implement d2lvalence.data.D2LFile')
+
+    boundary = uuid.uuid4().hex
+    fdata.seek(0) # check the tape
+    fdata = f.Stream.read()
+    fdata.seek(0) # please be kind, rewind
+
+    pdescr = '--{0}\r\nContent-Type: application/json\r\n\r\n{1}\r\n'.format(boundary,json.dumps(f.DescriptorDict)).encode(encoding='utf-8')
+    ptopbound = '--{0}\r\nContent-Disposition: form-data; name=""; filename="{1}"\r\nContent-Type: {2}\r\n\r\n'.format(boundary,f.Name,f.ContentType).encode(encoding='utf-8')
+    pbotbound = '\r\n--{0}--'.format(boundary).encode(encoding='utf-8')
+
+    payload = pdescr + ptopbound + fdata + pbotbound
+    headers = {'Content-Type':'multipart/mixed;boundary='+boundary,
+               'Content-Length': str(len(payload))}
+
+    return _post(route,uc,data=payload,headers=headers)
+
+def _get_locker_item(uc,route):
+    result = None
+    r = _get(route,uc)
+    if '/' in route[-1:]:
+        result = []
+        for i in range(len(r)):
+            result.append(d2ldata.LockerItem(r[i]))
+    else:
+        result = r
+    return result
+
+def _check_path(path):
+    if not '/' in path[0]:
+        raise ValueError('Path must be rooted with in initial "/".').with_traceback(sys.exc_info()[2])
+    else:
+        return True
+
+def delete_my_locker_item(uc,path='/',ver='1.0'):
+    if _check_path(path):
+        route = '/d2l/api/le/{0}/locker/myLocker{1}'.format(ver,path)
+        r = _delete(route,uc)
+
+def delete_locker_item(uc,user_id,path='/',ver='1.0'):
+    if _check_path(path):
+        route = '/d2l/api/le/{0}/locker/user/{1}{2}'.format(ver,user_id,path)
+        r = _delete(route,uc)
+        
+def get_my_locker_item(uc,path='/',ver='1.0'):
+    if _check_path(path):
+        route = '/d2l/api/le/{0}/locker/myLocker{1}'.format(ver,path)
+        return _get_locker_item(uc,route)
+
+def get_locker_item(uc,user_id,path='/',ver='1.0'):
+    if _check_path(path):
+        route = '/d2l/api/le/{0}/locker/user/{1}{2}'.format(ver,user_id,path)
+        return _get_locker_item(uc,route)
+
+def create_my_locker_folder(uc,folder,path='/',ver='1.0'):
+    if _check_path(path):
+        route = '/d2l/api/le/{0}/locker/myLocker{1}'.format(ver,path)
+        return _post(route,uc,data=json.dumps(folder),headers={'Content-Type':'application/json'})
+
+def create_locker_folder(uc,user_id,folder,path='/',ver='1.0'):
+    if _check_path(path):
+        route = '/d2l/api/le/{0}/locker/user/{1}{2}'.format(ver,user_id,path)
+        return _post(route,uc,data=json.dumps(folder),headers={'Content-Type':'application/json'})
+
+def create_my_locker_file(uc,d2lfile,path='/',ver='1.0'):
+    if _check_path(path):
+        route = '/d2l/api/le/{0}/locker/myLocker{1}'.format(ver,path)
+        return _simple_upload(route,uc,d2lfile)
+
+def create_locker_file(uc,user_id,d2lfile,path='/',ver='1.0'):
+    if _check_path(path):
+        route = '/d2l/api/le/{0}/locker/user/{1}{2}'.format(ver,user_id,path)
+        return _simple_upload(route,uc,d2lfile)
+
+def rename_my_locker_folder(uc,new_folder_name,path='/',ver='1.0'):
+    if _check_path(path):
+        route = '/d2l/api/le/{0}/locker/myLocker{1}'.format(ver,path)
+        return _put(route,uc,data=json.dumps(new_folder_name),headers={'Content-Type':'application/json'})
+
+def rename_locker_folder(uc,user_id,new_folder_name,path='/',ver='1.2'):
+    if _check_path(path):
+        route = '/d2l/api/le/{0}/locker/user/{1}{2}'.format(ver,user_id,path)
+        return _put(route,uc,data=json.dumps(new_folder_name),headers={'Content-Type':'application/json'})
+
+# Lockers and groups
+def delete_group_locker_item(uc,orgunit_id,group_id,path='/',ver='1.0'):
+    if _check_path(path):
+        route = '/d2l/api/le/{0}/{1}/locker/group/{2}{3}'.format(ver,orgunit_id,group_id,path)
+        r = _delete(route,uc)
+
+def get_group_locker_category(uc,orgunit_id,groupcat_id,ver='1.0'):
+    route = '/d2l/api/lp/{0}/{1}/groupcategories/{2}/locker'.format(ver,orgunit_id,groupcat_id)
+    return d2ldata.GroupLocker(_get(route,uc))
+
+def get_group_locker_item(uc,orgunit_id,group_id,path='/',ver='1.0'):
+    if _check_path(path):
+        route = '/d2l/api/le/{0}/{1}/locker/group/{2}{3}'.format(ver,orgunit_id,group_id,path)
+        return _get_locker_item(uc,route)
+
+def setup_group_locker_category(uc,orgunit_id,groupcat_id,ver='1.0'):
+    route = '/d2l/api/lp/{0}/{1}/groupcategories/{2}/locker'.format(ver,orgunit_id,groupcat_id)
+    return d2ldata.GroupLocker(_post(route,uc))
+
+def create_group_locker_folder(uc,orgunit_id,group_id,folder,path='/',ver='1.0'):
+    if _check_path(path):
+        route = '/d2l/api/le/{0}/{1}/locker/group/{2}{3}'.format(ver,orgunit_id,group_id,path)
+        return _post(route,uc,data=json.dumps(folder),headers={'Content-Type':'application/json'})
+
+def create_group_locker_file(uc,orgunit_id,group_id,d2lfile,path='/',ver='1.0'):
+    if _check_path(path):
+        route = '/d2l/api/le/{0}/{1}/locker/group/{2}{3}'.format(ver,orgunit_id,group_id,path)
+        return _simple_upload(route,uc,d2lfile)
+
+def rename_group_locker_folder(uc,orgunit_id,group_id,new_folder_name,path='/',ver='1.0'):
+    if _check_path(path):
+        route = '/d2l/api/le/{0}/{1}/locker/group/{2}{3}'.format(ver,user_id,path)
+        return _put(route,uc,data=json.dumps(new_folder_name),headers={'Content-Type':'application/json'})
 

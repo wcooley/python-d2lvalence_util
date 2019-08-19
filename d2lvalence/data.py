@@ -20,6 +20,7 @@
 :synopsis: Provides definitions and support for handling Valence data structures
 """
 import copy
+import io
 import json
 
 ## Utility functions
@@ -88,6 +89,54 @@ class PagedResultSet(D2LStructure):
     @property
     def Items(self):
         return self.props['Items']
+
+class D2LFile(D2LStructure):
+    def __init__(self,json_dict):
+        D2LStructure.__init__(self,json_dict)
+
+    @property
+    def Stream(self):
+        return self.props['Stream']
+
+    @Stream.setter
+    def Stream(self,f):
+        if not isinstance(f, io.BufferedIOBase ):
+            raise TypeError('File must implement io.BufferedIOBase')
+        else:
+            self.props['Stream']=f
+
+    @property
+    def DescriptorDict(self):
+        return self.props['DescriptorDict']
+
+    @DescriptorDict.setter
+    def DescriptorDict(self,d):
+        self.props['DescriptorDict']=d
+
+    Name = property(get_string_prop('Name'),set_string_prop('Name'))
+    ContentType = property(get_string_prop('ContentType'),set_string_prop('ContentType'))
+    
+
+class D2LLockerFile(D2LFile):
+    def __init__(self,json_dict):
+        D2LFile.__init__(self,json_dict)
+
+    @property
+    def Description(self):
+        return self.props['DescriptorDict']['Description']
+
+    @Description.setter
+    def Description(self,s):
+        self.props['DescriptorDict']['Description']=s
+
+    @property
+    def IsPublic(self):
+        return self.props['DescriptorDict']['IsPublic']
+
+    @IsPublic.setter
+    def IsPublic(self,b):
+        self.props['DescriptorDict']['IsPublic']=b
+
 
 ## API Properties concrete classes
 class BulkSupportedVersionResponse(D2LStructure):
@@ -531,3 +580,36 @@ class GradeValueComputable(GradeValue):
     WeightedDenominator = property(get_number_prop('WeightedDenominator'))
 
 
+## Locker concrete classes
+class LockerItem(D2LStructure):
+    def __init__(self,json_dict):
+        D2LStructure.__init__(self,json_dict)
+
+    Name = property(get_string_prop('Name'))
+    Description = property(get_string_prop('Description'))
+    Type = property(get_number_prop('Type'))
+    Size = property(get_number_prop('Size'))
+    LastModified = property(get_string_prop('LastModified'))
+
+class LockerFolder(D2LStructure):
+    def __init__(self,json_dict):
+        D2LStructure.__init__(self,json_dict)
+
+    Name = property(get_string_prop('Name'))
+
+    @property
+    def Contents(self):
+        return self.props['Contents']
+
+    def find_locker_item(self,name):
+        result = []
+        for i in range(len(self.props['Contents'])):
+            if name in self.props['Contents'][i]['Name']:
+                result.append(self.props['Contents'][i])
+        return result
+
+class GroupLocker(D2LStructure):
+    def __init__(self,json_dict):
+        D2LStructure.__init__(self,json_dict)
+
+    HasLocker = property(get_boolean_prop('HasLocker'))
