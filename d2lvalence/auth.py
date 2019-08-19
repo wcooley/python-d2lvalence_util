@@ -364,7 +364,9 @@ class D2LUserContext(AuthBase):
         method = r.method
 
         time = self._get_time_string()
-        base = '{0}&{1}&{2}'.format(method.upper(), path.lower(), time)
+        # return path to its original, un-URL quoted state
+        bs_path = urllib.parse.unquote_plus(path)
+        base = '{0}&{1}&{2}'.format(method.upper(), bs_path.lower(), time)
 
         app_sig = self.signer.get_hash(self.app_key, base)
         if self.anonymous:

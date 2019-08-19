@@ -9,8 +9,8 @@
 """
 
 __title__ = 'd2lvalence'
-__version__ = '0.1.11'
-__build__ = 0x00010B
+__version__ = '0.1.12'
+__build__ = 0x00010C
 __author__ = 'Desire2Learn Extensibility'
 __license__ = 'Apache v2'
-__copyright__ = 'Copyright 2012 Desire2Learn Inc.'
+__copyright__ = 'Copyright 2013 Desire2Learn Inc.'

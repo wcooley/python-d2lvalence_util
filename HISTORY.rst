@@ -3,6 +3,12 @@
 History
 -------
 
+0.1.12 (2013-01-23)
++++++++++++++++++++
+* fixed bug in D2LUserContext's implementation as a requests.auth.AuthBase so
+  that it more properly handles API routes that contain characters that would be
+  URL escaped by the requests library
+
 0.1.11 (2013-01-04)
 +++++++++++++++++++
 * revised `auth.D2LAppContext.create_url_for_authentication` to include an
