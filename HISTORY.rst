@@ -3,6 +3,11 @@
 History
 -------
 
+0.1.10 (2012-12-18)
+++++++++++++++++++++
+* revised `data` and `service` modules to update for compatibility with requests
+  package post version 1.0.0
+
 0.1.9 (2012-10-15)
 ++++++++++++++++++
 * added data and service functions for Learning Repostory routes

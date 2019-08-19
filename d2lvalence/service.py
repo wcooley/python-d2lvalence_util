@@ -35,7 +35,7 @@ def _fetch_content(request):
     if request.headers['content-type']:
         ct = request.headers['content-type']
     if 'application/json' in ct:
-        return request.json
+        return request.json()
     elif 'text/plain' in ct:
         return request.text
     else:
