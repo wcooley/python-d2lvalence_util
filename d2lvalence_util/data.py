@@ -16,13 +16,15 @@
 # the License.
 
 """
-:module: d2lvalence.data
+:module: d2lvalence_util.data
 :synopsis: Provides definitions and support for handling Valence data structures
 """
 import sys
 import copy
 import io
 import json
+import d2lvalence.auth as d2lauth
+import collections  # for testing if an item is iterable
 import requests
 
 ## Utility functions
@@ -604,6 +606,72 @@ class OrgUnit(D2LStructure):
    def Type(self):
        return self.props['Type']
 
+class OrgUnitCreateData(D2LStructure):
+    def __init__(self,json_dict):
+        D2LStructure.__init__(self,json_dict)
+
+    @staticmethod
+    def fashion_OrgUnitCreateData(outype='',
+                                  name='',
+                                  code='',
+                                  parents=None):
+        p = None
+        if parents and isinstance(parents, collections.Iterable):
+            p = [int(x) for x in parents]
+
+        oucd = {'Type': outype,
+               'Name': name,
+               'Code': code,
+               'Parents': p }
+        return OrgUnitCreateData(oucd)
+
+    Type = property(_get_number_prop('Type'), _set_number_prop('Type'))
+    Name = property(_get_string_prop('Name'), _set_string_prop('Name'))
+    Code = property(_get_string_prop('Code'), _set_string_prop('Code'))
+
+    @property
+    def Parents(self):
+        return self.props['Parents']
+
+    @Parents.setter
+    def Parents(self,new_parents=None):
+        if not new_parents:
+            self.props['Parents'] = None
+        elif isinstance(new_parents, collections.Iterable):
+            self.props['Parents'] = [int(x) for x in new_parents]
+
+
+class OrgUnitProperties(D2LStructure):
+   def __init__(self,json_dict):
+       D2LStructure.__init__(self,json_dict)
+
+   Identifier = property(_get_string_prop('Identifier'), _set_string_prop('Identifier'))
+   Name = property(_get_string_prop('Name'), _set_string_prop('Name'))
+   Code = property(_get_string_prop('Code'), _set_string_prop('Code'))
+   Path = property(_get_string_prop('Path'), _set_string_prop('Path'))
+
+   @property
+   def Type(self):
+       return self.props['Type']
+
+   @Type.setter
+   def Type(self, new_type_info):
+       if not isinstance(new_type_info, OrgUnitTypeInfo):
+           raise TypeError('New type info must implement d2lvalence.data.OrgUnitTypeInfo').with_traceback(sys.exc_info()[2])
+       self.props.setdefault('Type',{})
+       self.props['Type']['Id'] = new_type_info.Id
+       self.props['Type']['Code'] = new_type_info.Code
+       self.props['Type']['Name'] = new_type_info.Name
+
+   def update_type(self, new_id=None, new_code=None, new_name=None):
+       self.props.setdefault('Type',{})
+       if new_id:
+           self.props['Type']['Id'] = int(new_id)
+       if new_code:
+           self.props['Type']['Code'] = str(new_code)
+       if new_name:
+           self.props['Type']['Name'] = str(new_name)
+
 # Org unit types
 class OrgUnitType(D2LStructure):
    def __init__(self,json_dict):
@@ -624,6 +692,7 @@ class OrgUnitTypeInfo(D2LStructure):
    Id = property(_get_number_prop('Id'))
    Code = property(_get_string_prop('Code'))
    Name = property(_get_string_prop('Name'))
+
 
 ## Course offering concrete classes
 class BasicOrgUnit(D2LStructure):
@@ -716,7 +785,7 @@ class CreateCourseOffering(D2LStructure):
    SemesterId = property(_get_number_prop('SemesterId'), _set_number_prop('SemesterId'))
    StartDate = property(_get_string_prop('StartDate'), _set_string_prop('StartDate'))
    EndDate = property(_get_string_prop('EndDate'), _set_string_prop('EndDate'))
-   LocaleId = property(_get_number_prop('LocaleId'), _get_number_prop('LocaleId'))
+   LocaleId = property(_get_number_prop('LocaleId'), _set_number_prop('LocaleId'))
    ForceLocale = property(_get_boolean_prop('ForceLocale'), _set_boolean_prop('ForceLocale'))
    ShowAddressBook = property(_get_boolean_prop('ShowAddressBook'), _set_boolean_prop('ShowAddressBook'))
 
@@ -2002,3 +2071,155 @@ class LRWSSearchResultCollection(D2LStructure):
                result.append(LRWSSearchResult(self.props['Results'][i]))
 
        return result
+
+## LTI
+class LTIToolProviderData(D2LStructure):
+    def __init__(self,json_dict):
+        D2LStructure.__init__(self,json_dict)
+
+    LtiProviderId = property(_get_number_prop('LtiProviderData'))
+    OrgUnitId = property(_get_number_prop('OrgUnitId'))
+    LaunchPoint = property(_get_string_prop('LaunchPoint'))
+    UseDefaultTcInfo = property(_get_boolean_prop('UseDefaultTcInfo'))
+    Key = property(_get_string_prop('Key'))
+    Name = property(_get_string_prop('Name'))
+    Description = property(_get_string_prop('Description'))
+    ContactEmail = property(_get_string_prop('ContactEmail'))
+    IsVisible = property(_get_boolean_prop('IsVisible'))
+
+
+class LTIToolProviderCreateData(D2LStructure):
+    def __init__(self,json_dict):
+        D2LStructure.__init__(self,json_dict)
+
+    @staticmethod
+    def fashion_LTIToolProviderCreateData(
+            launch_point='',
+            secret='',
+            use_default_tool_consumer_info=False,
+            key='',
+            name='',
+            description='',
+            contact_email='',
+            is_visible=False ):
+        ltpcd = {'LaunchPoint': launch_point,
+                 'Secret': secret,
+                 'UseDefaultTcInfo': use_default_tool_consumer_info,
+                 'Key': key,
+                 'Name': name,
+                 'Description': description,
+                 'ContactEmail': contact_email,
+                 'IsVisible': is_visible }
+        return LTIToolProviderCreateData(ltpcd)
+
+    LaunchPoint = property(_get_string_prop('LaunchPoint'))
+    Secret = property(_get_string_prop('Secret'))
+    UseDefaultToolConsumerInfo = (_get_boolean_prop('UseDefaultToolConsumerInfo'))
+    Key = property(_get_string_prop('Key'))
+    Name = property(_get_string_prop('Name'))
+    Description = property(_get_string_prop('Description'))
+    ContactEmail = property(_get_string_prop('ContactEmail'))
+    IsVisible = property(_get_boolean_prop('IsVisible'))
+
+class LTIQuickLinkData(D2LStructure):
+    def __init__(self,json_dict):
+        D2LStructure.__init__(self,json_dict)
+
+    LtiLinkId = property(_get_number_prop('LtiLinkId'))
+    PublicUrl = property(_get_string_prop('PublicUrl'))
+
+class LTICustomParameter(D2LStructure):
+    def __init__(self,json_dict):
+        D2LStructure.__init__(self,json_dict)
+
+    Name = property(_get_string_prop('Name'))
+    Value = property(_get_string_prop('String'))
+
+class LTILinkData(D2LStructure):
+    def __init__(self,json_dict):
+        D2LStructure.__init__(self,json_dict)
+
+    LtiLinkId = property(_get_number_prop('LtiLinkId'))
+    Title = property(_get_string_prop('Title'))
+    Url = property(_get_string_prop('Url'))
+    Description = property(_get_string_prop('Description'))
+    Key = property(_get_string_prop('Key'))
+    IsVisible = property(_get_boolean_prop('IsVisible'))
+    SignMessage = property(_get_boolean_prop('SignMessage'))
+    SignWithTc = property(_get_boolean_prop('SignWithTc'))
+    SendTcInfo = property(_get_boolean_prop('SendTcInfo'))
+    SendContextInfo = property(_get_boolean_prop('SendContextInfo'))
+    SendUserId = property(_get_boolean_prop('SendUserId'))
+    SendUserName = property(_get_boolean_prop('SendUserName'))
+    SendUserEmail = property(_get_boolean_prop('SendUserEmail'))
+    SendLinkTitle = property(_get_boolean_prop('SendLinkTitle'))
+    SendLinkDescription = property(_get_boolean_prop('SendLinkDescription'))
+    SendD2LUserName = property(_get_boolean_prop('SendD2LUserName'))
+    SendD2LOrgDefinedId = property(_get_boolean_prop('SendD2LOrgDefinedId'))
+    SendD2LOrgRoleId = property(_get_boolean_prop('SendD2LOrgRoleId'))
+
+    @property
+    def CustomParameters(self):
+        return self.props['CustomParameters']
+
+class CreateLTILinkData(D2LStructure):
+    def __init__(self,json_dict):
+        D2LStructure.__init__(self,json_dict)
+
+    @staticmethod
+    def fashion_CreateLTILinkData(
+            title = '',
+            url = '',
+            description = '',
+            key = '',
+            plain_secret = '',
+            is_visible = False,
+            sign_message = False,
+            sign_with_tc = False,
+            send_tc_info = False,
+            send_context_info = False,
+            send_user_id = False,
+            send_user_name = False,
+            send_user_email = False,
+            send_link_title = False,
+            send_link_description = False,
+            send_d2l_user_name = False,
+            send_d2l_org_defined_id = False,
+            send_d2l_org_role_id = False,
+            custom_parameter_list = ()
+            ):
+        clld = {'Title': title, 'Url': url, 'Description': description,
+                'Key': key, 'PlainSecret': plain_secret,
+                'IsVisible': is_visible, 'SignMessage': sign_message,
+                'SignWithTc': sign_with_tc, 'SendTcInfo': send_tc_info,
+                'SendContextInfo': send_context_info, 'SendUserId': send_user_id,
+                'SendUserName': send_user_name, 'SendUserEmail': send_user_email,
+                'SendLinkTitle': send_link_title, 'SendLinkDescription': send_link_description,
+                'SendD2LUserName': send_d2l_user_name, 'SendD2LOrgDefinedId': send_d2l_org_defined_id,
+                'SendD2LOrgRoleId': send_d2l_org_role_id,
+                'CustomParameters': custom_parameter_list }
+        return CreateLTILinkData(clld)
+
+    Title = property(_get_string_prop('Title'), _set_string_prop('Title'))
+    Url = property(_get_string_prop('Url'), _set_string_prop('Url'))
+    Description = property(_get_string_prop('Description'), _set_string_prop('Description'))
+    Key = property(_get_string_prop('Key'), _set_string_prop('Key'))
+    IsVisible = property(_get_boolean_prop('IsVisible'), _set_boolean_prop('IsVisible'))
+    SignMessage = property(_get_boolean_prop('SignMessage'), _set_boolean_prop('SignMessages'))
+    SignWithTc = property(_get_boolean_prop('SignWithTc'), _set_boolean_prop('SignWithTc'))
+    SendTcInfo = property(_get_boolean_prop('SendTcInfo'), _set_boolean_prop('SignTcInfo'))
+    SendContextInfo = property(_get_boolean_prop('SendContextInfo'), _set_boolean_prop('SendContextInfo'))
+    SendUserId = property(_get_boolean_prop('SendUserId'), _set_boolean_prop('SendUserId'))
+    SendUserName = property(_get_boolean_prop('SendUserName'), _set_boolean_prop('SendUserName'))
+    SendUserEmail = property(_get_boolean_prop('SendUserEmail'), _set_boolean_prop('SendUserEmail'))
+    SendLinkTitle = property(_get_boolean_prop('SendLinkTitle'), _set_boolean_prop('SendLinkTitle'))
+    SendLinkDescription = property(_get_boolean_prop('SendLinkDescription'), _set_boolean_prop('SendLinkDescription'))
+    SendD2LUserName = property(_get_boolean_prop('SendD2LUserName'), _set_boolean_prop('SendD2LUserName'))
+    SendD2LOrgDefinedId = property(_get_boolean_prop('SendD2LOrgDefinedId'), _set_boolean_prop('SendD2LOrgDefinedId'))
+    SendD2LOrgRoleId = property(_get_boolean_prop('SendD2LOrgRoleId'), _set_boolean_prop('SendD2LOrgRoleId'))
+
+    @property
+    def CustomerParameters(self):
+        return self.props['CustomParameters']
+
+    ## Need to add custom parms setters here

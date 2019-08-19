@@ -16,16 +16,16 @@
 # the License.
 
 """
-:module: d2lvalence.service
+:module: d2lvalence_util.service
 :synopsis: Provides a suite of convenience functions for making D2L Valence calls.
 """
-import sys       # for exception throwing
-import json      # for packing and unpacking dicts into JSON structures
-import requests  # for making HTTP requests of the back-end service
-import uuid      # for generating unique boundary tags in multi-part POST/PUT requests
+import sys          # for exception throwing
+import json         # for packing and unpacking dicts into JSON structures
+import requests     # for making HTTP requests of the back-end service
+import uuid         # for generating unique boundary tags in multi-part POST/PUT requests
 
 import d2lvalence.auth as d2lauth
-import d2lvalence.data as d2ldata
+import d2lvalence_util.data as d2ldata
 
 # internal utility functions
 def _str_to_num(s):
@@ -45,7 +45,7 @@ def _fetch_content(r,debug=None):
         debug.add_response(r)
     r.raise_for_status()
     ct = ''
-    if r.headers['content-type']:
+    if 'content-type' in r.headers:
         ct = r.headers['content-type']
     if 'application/json' in ct:
         if requests.__version__[0] is '0':
@@ -299,17 +299,41 @@ def update_user_activation(uc,user_id,activation_data,ver='1.0',**kwargs):
     return _put(route,uc,**kwargs)
 
 # Profiles
+def delete_my_profile_image(uc,ver='1.0',**kwargs):
+    route = '/d2l/api/lp/{0}/profile/myProfile/image'.format(ver)
+    return _delete(route,uc,**kwargs)
+
+def delete_profile_image_by_profile_id(uc,profile_id,ver='1.0',**kwargs):
+    route = '/d2l/api/lp/{0}/profile/{1}/image'.format(ver,profile_id)
+    return _delete(route,uc,**kwargs)
+
+def delete_profile_image_by_user_id(uc,user_id,ver='1.0',**kwargs):
+    route = '/d2l/api/lp/{0}/profile/user/{1}/image'.format(ver,user_id)
+    return _delete(route,uc,**kwargs)
+
 def get_profile_by_profile_id(uc,profile_id,ver='1.0',**kwargs):
     route = '/d2l/api/lp/{0}/profile/{1}'.format(ver,profile_id)
     return d2ldata.UserProfile(_get(route,uc,**kwargs))
+
+def get_profile_image_by_profile_id(uc,profile_id,ver='1.0',**kwargs):
+    route = '/d2l/api/lp/{0}/profile/{1}/image'.format(ver,profile_id)
+    return _get(route,uc,**kwargs)
 
 def get_profile_by_user_id(uc,user_id,ver='1.0',**kwargs):
     route = '/d2l/api/lp/{0}/profile/user/{1}'.format(ver,user_id)
     return d2ldata.UserProfile(_get(route,uc,**kwargs))
 
+def get_profile_image_by_user_id(uc,user_id,ver='1.0',**kwargs):
+    route = '/d2l/api/lp/{0}/profile/user/{1}/image'.format(ver,user_id)
+    return _get(route,uc,**kwargs)
+
 def get_my_profile(uc,ver='1.0',**kwargs):
     route = '/d2l/api/lp/{0}/profile/myProfile'.format(ver)
     return d2ldata.UserProfile(_get(route,uc,**kwargs))
+
+def get_my_profile_image(uc,ver='1.0',**kwargs):
+    route = '/d2l/api/lp/{0}/profile/myProfile/image'.format(ver)
+    return _get(route,uc,**kwargs)
 
 def update_my_profile(uc,updated_profile_data,ver='1.0',**kwargs):
     if not isinstance(updated_profile_data, d2ldata.UserProfile):
@@ -319,6 +343,31 @@ def update_my_profile(uc,updated_profile_data,ver='1.0',**kwargs):
     kwargs.setdefault('headers',{})
     kwargs['headers'].update({'Content-Type':'application/json'})
     return d2ldata.UserProfile(_put(route,uc,**kwargs))
+
+def update_profile_image_by_user_id(uc,user_id,d2l_file,ver='1.0',**kwargs):
+    if not isinstance(d2l_file, d2ldata.D2LFile):
+        raise TypeError('Image must implement d2lvalence.data.D2LFile').with_traceback(sys.exc_info()[2])
+    route = '/d2l/api/lp/{0}/profile/user/{1}/image'.format(ver,user_id)
+    kwargs.setdefault('files',{})
+    kwargs['files'].update({'profileImage': (d2l_file.Name, d2l_file.Stream)})
+    return _post(route,uc,**kwargs)
+
+def update_profile_image_by_profile_id(uc,profile_id,d2l_file,ver='1.0',**kwargs):
+    if not isinstance(d2l_file, d2ldata.D2LFile):
+        raise TypeError('Image must implement d2lvalence.data.D2LFile').with_traceback(sys.exc_info()[2])
+    route = '/d2l/api/lp/{0}/profile/{1}/image'.format(ver,profile_id)
+    kwargs.setdefault('files',{})
+    kwargs['files'].update({'profileImage': (d2l_file.Name, d2l_file.Stream)})
+    return _post(route,uc,**kwargs)
+
+def update_my_profile_image(uc,d2l_file,ver='1.0',**kwargs):
+    if not isinstance(d2l_file, d2ldata.D2LFile):
+        raise TypeError('Image must implement d2lvalence.data.D2LFile').with_traceback(sys.exc_info()[2])
+    route = '/d2l/api/lp/{0}/profile/myProfile/image'.format(ver)
+    kwargs.setdefault('files',{})
+    kwargs['files'].update({'profileImage': (d2l_file.Name, d2l_file.Stream)})
+    return _post(route,uc,**kwargs)
+
 
 # Passwords
 def delete_password_for_user(uc,user_id,ver='1.0',**kwargs):
@@ -357,6 +406,7 @@ def get_role(uc,role_id,ver='1.0',**kwargs):
     route = '/d2l/api/lp/{0}/roles/{1}'.format(ver,role_id)
     return d2ldata.Role(_get(route,uc,**kwargs))
 
+
 ## Org structure
 def get_organization_info(uc,ver='1.0',**kwargs):
     route = '/d2l/api/lp/{0}/organization/info'.format(ver)
@@ -394,6 +444,29 @@ def get_orgunit_parents(uc,org_unit_id,org_unit_type_id=None,ver='1.0',**kwargs)
     for i in range(len(r)):
         result.append(d2ldata.OrgUnit(r[i]))
     return result
+
+def get_orgunit_properties(uc,org_unit_id,ver='1.3',**kwargs):
+    route = '/d2l/api/lp/{0}/orgstructure/{1}'.format(ver,org_unit_id)
+    r = _get(route,uc,**kwargs)
+    return d2ldata.OrgUnit(r)
+
+def create_custom_orgunit(uc,org_unit_create_data=None,ver='1.3',**kwargs):
+    if not isinstance(org_unit_create_data, d2ldata.OrgUnitCreateData):
+        raise TypeError('New orgunit must implement d2lvalence.data.OrgUnitCreateData').with_traceback(sys.exc_info()[2])
+    route = '/d2l/api/lp/{0}/orgstructure/'.format(ver)
+    kwargs.setdefault('data',org_unit_create_data.as_json())
+    kwargs.setdefault('headers',{})
+    kwargs['headers'].update({'Content-Type':'application/json'})
+    return d2ldata.OrgUnit(_post(route,uc,**kwargs))
+
+def update_custom_orgunit(uc,org_unit_id,org_unit_properties=None,ver='1.4',**kwargs):
+    if not isinstance(org_unit_properties, d2ldata.OrgUnitProperties):
+        raise TypeError('New orgunit properties must implement d2lvalence.data.OrgUnitProperties').with_traceback(sys.exc_info()[2])
+    route = '/d2l/api/lp/{0}/orgstructure/{1}'.format(ver,org_unit_id)
+    kwargs.setdefault('data',org_unit_properties.as_json())
+    kwargs.setdefault('headers',{})
+    kwargs['headers'].update({'Content-Type':'application/json'})
+    return d2ldata.OrgUnitProperties(_put(route,uc,**kwargs))
 
 # Org unit types
 def get_all_outypes(uc,ver='1.0',**kwargs):
@@ -1662,3 +1735,22 @@ def get_ep_export_task_status(uc,export_task_id,ver='2.0',**kwargs):
 def get_ep_export_task_package(uc,export_task_id,ver='2.0',**kwargs):
     route = '/d2l/api/eP/{0}/export/{1}/package'.format(ver,export_task_id)
     return _get(route,uc,**kwargs)
+
+## LTI routes
+
+# LTI links
+
+# LTI Tool providers
+
+def get_lti_tool_providers_for_orgunit(uc,org_unit_id,ver='1.3',**kwargs):
+    route = '/d2l/api/le/{0}/lti/tp/{1}/'.format(ver,org_unit_id)
+    r = _get(route,uc,**kwargs)
+    result = []
+    for i in range(len(r)):
+        result.append(d2ldata.LTIToolProviderData(r[i]))
+    return result
+
+
+def get_lti_tool_provider_info(uc,org_unit_id,tool_provider_id,ver='1.3',**kwargs):
+    route = '/d2l/api/le/{0}/lti/tp/{1}/{2}'.format(ver,org_unit_id,tool_provider_id)
+    return d2ldata.LTITooProviderData(_get(route,uc,**kwargs))

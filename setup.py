@@ -15,21 +15,21 @@ try:
 except ImportError:
     from distutils.core import setup
 
-import d2lvalence
+import d2lvalence_util
 
 if sys.argv[-1] == 'publish':
     os.system('python setup.py sdist upload')
     sys.exit
 
-packages = ['d2lvalence', ]
+packages = ['d2lvalence_util', ]
 
 # We depend on Kenneth Reitz' requests package to handle the actual HTTP traffic
-requires = ['requests >= 1.2.0', ]
+requires = ['d2lvalence >= 1.0.0', 'requests >= 1.2.0', ]
 
 setup(
-    name='D2LValence',
-    version=d2lvalence.__version__,
-    description='D2LValence client library for Python.',
+    name='D2LValence-Util',
+    version=d2lvalence_util.__version__,
+    description='D2LValence utility library for Python.',
     long_description=open('README.rst').read() + '\n\n' +
                      open('HISTORY.rst').read(),
     author='Desire2Learn Inc.',
@@ -39,6 +39,7 @@ setup(
     package_data={'': ['LICENSE', ] },
     include_package_data=True,
     install_requires=[
+        'd2lvalence >= 1.0.0',
         'requests >= 1.2.0',
         ],
     license=open('LICENSE').read(),

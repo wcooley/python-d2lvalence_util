@@ -3,6 +3,12 @@
 History
 -------
 
+0.1.16()
+++++++++
+* Split out d2lvalence.auth into d2lvalence package, and repackage data and
+  service modules into d2lvalence-util package.
+
+
 0.1.15 (2013-05-22)
 +++++++++++++++++++
 * added structures and routes for support user activation
