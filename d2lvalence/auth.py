@@ -355,18 +355,18 @@ class D2LUserContext(AuthBase):
     def __call__(self,r):
         # modify requests.Request `r` to patch in appropriate auth goo
 
-        scheme = netloc = path = query = fragment = ''
+        method = scheme = netloc = path = query = fragment = ''
 
         parts = urllib.parse.urlsplit(r.url)
         scheme, netloc, path, query, fragment = parts[:5]
 
         qparms_dict = urllib.parse.parse_qs( query )
-        method = r.method
 
+        method = r.method.upper()
         time = self._get_time_string()
         # return path to its original, un-URL quoted state
-        bs_path = urllib.parse.unquote_plus(path)
-        base = '{0}&{1}&{2}'.format(method.upper(), bs_path.lower(), time)
+        bs_path = urllib.parse.unquote_plus(path.lower())
+        base = '{0}&{1}&{2}'.format(method, bs_path, time)
 
         app_sig = self.signer.get_hash(self.app_key, base)
         if self.anonymous:
@@ -410,7 +410,9 @@ class D2LUserContext(AuthBase):
         API call.
         """
         time = self._get_time_string()
-        base = '{0}&{1}&{2}'.format(method.upper(), api_route.lower(), time)
+        # return path to its original, un-URL quoted state
+        bs_path = urllib.parse.unquote_plus(api_route.lower())
+        base = '{0}&{1}&{2}'.format(method.upper(), bs_path, time)
 
         app_sig = self.signer.get_hash(self.app_key, base)
         if self.anonymous:

@@ -3,6 +3,13 @@
 History
 -------
 
+0.1.14 (2013-04-29)
++++++++++++++++++++
+* repaired D2LUserContext so that it (a) handles API routes that contain
+  characters that would URL-escaped in both it's AuthBase implementation *and*
+  its :func:`create_authenticated_url` method, and (b) does this handling in the
+  same way that does D2L authentication on other language platforms.
+
 0.1.13 (2013-04-17)
 +++++++++++++++++++
 * enhanced `service` functions to allow for passing keyword args down into the
